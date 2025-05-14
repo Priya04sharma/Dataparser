@@ -8,7 +8,7 @@ import sys
 from django.shortcuts import render
 from django.http import HttpResponse
 from .utility import get_spark_session
-spark = get_spark_session()
+
 import pandas as pd
 from pyspark.sql import SparkSession
 # HDFS configuration
@@ -58,12 +58,13 @@ def upload_csv(request):
 
 
 def fetch_iceberg_data(file_path):
-    spark = SparkSession.builder \
-        .appName("Read Iceberg Table") \
-        .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
-        .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
-        .getOrCreate()
+    # spark = SparkSession.builder \
+    #     .appName("Read Iceberg Table") \
+    #     .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
+    #     .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
+    #     .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
+    #     .getOrCreate()
+    spark = get_spark_session()
     
     table_name = clean_table_name(file_path)
     iceberg_table = f"hadoop_cat.db.{clean_table_name(file_path)}"
@@ -96,12 +97,13 @@ def download_iceberg_csv(request,file_path):
         return HttpResponse(f"Error: {str(e)}", status=500)
     
 def list_all_iceberg_tables():
-    spark = SparkSession.builder \
-        .appName("List Iceberg Tables") \
-        .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
-        .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
-        .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
-        .getOrCreate()
+    # spark = SparkSession.builder \
+    #     .appName("List Iceberg Tables") \
+    #     .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
+    #     .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
+    #     .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
+    #     .getOrCreate()
+    spark = get_spark_session()
 
     tables_df = spark.sql("SHOW TABLES IN hadoop_cat.db")
     table_names = [row['tableName'] for row in tables_df.collect()]
