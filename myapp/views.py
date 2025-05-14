@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from .forms import CSVFileForm
 from hdfs import InsecureClient
 import subprocess
+from django.core.paginator import Paginator
+
 import os
 import re
 import sys
@@ -78,11 +80,26 @@ def fetch_iceberg_data(file_path):
     spark.stop()
     return df
 
-def iceberg_table_view(request,file_path):
+def iceberg_table_view(request, file_path):
     try:
         df = fetch_iceberg_data(file_path)
-        html_table = df.to_html(classes="table table-bordered table-striped", index=False)
-        return render(request, "iceberg_table.html", {"table_html": html_table, "file_path": file_path})
+
+        # Pagination setup
+        paginator = Paginator(df.values.tolist(), 50)  # 50 rows per page
+        page_number = request.GET.get('page', 1)
+        page_obj = paginator.get_page(page_number)
+
+        # Build table HTML using current page rows and DataFrame columns
+        table_headers = df.columns.tolist()
+        page_df = pd.DataFrame(page_obj.object_list, columns=table_headers)
+        html_table = page_df.to_html(classes="table table-bordered table-striped", index=False)
+
+        return render(request, "iceberg_table.html", {
+            "table_html": html_table,
+            "page_obj": page_obj,
+            "file_path": file_path
+        })
+
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)
 
