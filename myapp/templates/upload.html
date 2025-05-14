@@ -6,17 +6,42 @@
 </head>
 <body>
     <h1>Upload CSV File</h1>
+
     {% if message %}
         <p style="color: green;">{{ message }}</p>
+    {% elif error %}
+        <p style="color: red;">{{ error }}</p>
     {% endif %}
+
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="file" name="csv_file" accept=".csv" required>
-        <button type="submit">Upload and Process</button>
+        <button type="submit" name="action" value="upload">Upload and Process</button>
     </form>
-<br>
-    <a href="{% url 'view_iceberg_table' 'abc' %}">View Iceberg Data</a>  <!-- Link to the table view -->
+
+    <br><br>
+    <!-- Dropdown for Unprocessed Files (CSV in HDFS) -->
+    <label for="unprocessedDropdown"><strong>📂 View Unprocessed Data:</strong></label>
+    <select id="unprocessedDropdown" onchange="location = this.value;">
+        <option value="#">Select a CSV file</option>
+        {% for file in unprocessed_files %}
+            <option value="{% url 'view_unprocessed_file' file %}">{{ file }}</option>
+        {% empty %}
+            <option disabled>No CSV files found</option>
+        {% endfor %}
+    </select>
+
+    <br><br>
+
+    <!-- Dropdown for Processed Iceberg Tables -->
+    <label for="processedDropdown"><strong>🧊 View Processed Data:</strong></label>
+    <select id="processedDropdown" onchange="location = this.value;">
+        <option value="#">Select an Iceberg table</option>
+        {% for table in iceberg_tables %}
+            <option value="{% url 'view_iceberg_table' table %}">{{ table }}</option>
+        {% empty %}
+            <option disabled>No Iceberg tables found</option>
+        {% endfor %}
+    </select>
 </body>
 </html>
-
-

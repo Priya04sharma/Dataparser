@@ -68,7 +68,18 @@ def upload_csv(request):
     else:
         form = CSVFileForm()
 
-    return render(request, 'upload.html', {'form': form})
+    # Fetch unprocessed CSVs from HDFS
+    files = client.list(HDFS_UPLOAD_DIR)
+    unprocessed_csvs = [f for f in files if f.endswith('.csv')]
+
+    # Fetch processed Iceberg tables
+    iceberg_tables = list_all_iceberg_tables()
+
+    return render(request, 'upload.html', {
+        'form': form,
+        'unprocessed_files': unprocessed_csvs,
+        'iceberg_tables': iceberg_tables,
+    })
 
 
 '''def upload_csv(request):
@@ -113,8 +124,7 @@ def fetch_iceberg_data(file_path):
     df_spark = spark.sql(f"SELECT * FROM {iceberg_table}")
 
     # Convert to Pandas DataFrame
-    df = df_spark.toPandas()
-
+    df = df_spark.limit(10).toPandas()
     spark.stop()
     return df
 
@@ -135,3 +145,15 @@ def download_iceberg_csv(request):
         return response
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)
+def list_all_iceberg_tables():
+    spark = SparkSession.builder \
+        .appName("List Iceberg Tables") \
+        .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
+        .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
+        .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
+        .getOrCreate()
+
+    tables_df = spark.sql("SHOW TABLES IN hadoop_cat.db")
+    table_names = [row['tableName'] for row in tables_df.collect()]
+    spark.stop()
+    return table_names
