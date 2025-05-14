@@ -80,28 +80,111 @@ def fetch_iceberg_data(file_path):
     spark.stop()
     return df
 
+# def iceberg_table_view(request, file_path):
+#     try:
+#         df = fetch_iceberg_data(file_path)
+
+#         # Pagination setup
+#         paginator = Paginator(df.values.tolist(), 50)  # 50 rows per page
+#         page_number = request.GET.get('page', 1)
+#         page_obj = paginator.get_page(page_number)
+
+#         # Build table HTML using current page rows and DataFrame columns
+#         table_headers = df.columns.tolist()
+#         page_df = pd.DataFrame(page_obj.object_list, columns=table_headers)
+#         html_table = page_df.to_html(classes="table table-bordered table-striped", index=False)
+
+#         return render(request, "iceberg_table.html", {
+#             "table_html": html_table,
+#             "page_obj": page_obj,
+#             "file_path": file_path
+#         })
+
+#     except Exception as e:
+#         return HttpResponse(f"Error: {str(e)}", status=500)
+
+
+from django.core.paginator import Paginator
+
+from django.shortcuts import render
+
+from django.http import HttpResponse
+
+from math import ceil
+
+from pyspark.sql import SparkSession
+ 
+ROWS_PER_PAGE = 50
+ 
 def iceberg_table_view(request, file_path):
+
     try:
-        df = fetch_iceberg_data(file_path)
 
-        # Pagination setup
-        paginator = Paginator(df.values.tolist(), 50)  # 50 rows per page
-        page_number = request.GET.get('page', 1)
-        page_obj = paginator.get_page(page_number)
+        # Get current page number from query params
 
-        # Build table HTML using current page rows and DataFrame columns
-        table_headers = df.columns.tolist()
-        page_df = pd.DataFrame(page_obj.object_list, columns=table_headers)
-        html_table = page_df.to_html(classes="table table-bordered table-striped", index=False)
+        page_number = int(request.GET.get('page', 1))
 
+        offset = (page_number - 1) * ROWS_PER_PAGE
+ 
+        # Setup SparkSession
+
+        spark = SparkSession.builder \
+
+            .appName("Iceberg Pagination") \
+
+            .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
+
+            .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
+
+            .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
+
+            .getOrCreate()
+ 
+        # Generate clean table name
+
+        from .views import clean_table_name  # Or move clean_table_name to utils
+
+        iceberg_table = f"hadoop_cat.db.{clean_table_name(file_path)}"
+ 
+        # Count total rows in the table
+
+        total_rows = spark.sql(f"SELECT COUNT(*) as count FROM {iceberg_table}").collect()[0]['count']
+
+        total_pages = ceil(total_rows / ROWS_PER_PAGE)
+ 
+        # Fetch only required rows using limit + offset
+
+        df_spark = spark.sql(
+
+            f"SELECT * FROM {iceberg_table} LIMIT {ROWS_PER_PAGE} OFFSET {offset}"
+
+        )
+ 
+        # Convert to Pandas for display
+
+        df = df_spark.toPandas()
+
+        spark.stop()
+ 
+        html_table = df.to_html(classes="table table-bordered table-striped", index=False)
+ 
         return render(request, "iceberg_table.html", {
-            "table_html": html_table,
-            "page_obj": page_obj,
-            "file_path": file_path
-        })
 
+            "table_html": html_table,
+
+            "file_path": file_path,
+
+            "current_page": page_number,
+
+            "total_pages": total_pages
+
+        })
+ 
     except Exception as e:
+
         return HttpResponse(f"Error: {str(e)}", status=500)
+
+ 
 
 def download_iceberg_csv(request,file_path):
     try:
