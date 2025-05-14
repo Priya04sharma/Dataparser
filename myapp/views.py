@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from .forms import CSVFileForm
 from hdfs import InsecureClient
 import subprocess
+from django.core.paginator import Paginator
 import os
 import re
 import sys
@@ -118,11 +119,25 @@ def fetch_iceberg_data(file_path):
     spark.stop()
     return df
 
-def iceberg_table_view(request,file_path):
+def iceberg_table_view(request, file_path):
     try:
-        df = fetch_iceberg_data(file_path)
-        html_table = df.to_html(classes="table table-bordered table-striped", index=False)
-        return render(request, "iceberg_table.html", {"table_html": html_table, "file_path": file_path})
+        df = fetch_iceberg_data(file_path)  # Your function to get data from Iceberg
+
+        # Convert DataFrame rows to a list of dictionaries
+        data_list = df.to_dict('records')
+        columns = df.columns.tolist()
+
+        # Use Django Paginator to paginate the data (20 rows per page)
+        paginator = Paginator(data_list, 20)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        return render(request, "iceberg_table.html", {
+            "page_obj": page_obj,
+            "columns": columns,
+            "file_path": file_path
+        })
+
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)
 
