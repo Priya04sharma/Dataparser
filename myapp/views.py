@@ -129,16 +129,12 @@ def iceberg_table_view(request, file_path):
         # Setup SparkSession
 
         spark = SparkSession.builder \
-
             .appName("Iceberg Pagination") \
-
             .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
-
             .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
-
             .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
-
             .getOrCreate()
+
  
         # Generate clean table name
 
