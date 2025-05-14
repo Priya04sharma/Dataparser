@@ -8,7 +8,7 @@
 <div class="container mt-4">
     <h2>Iceberg Table Data</h2>
     <div class="mb-3">
-        <a class="btn btn-primary" href="{% url 'download_iceberg_csv' %}">Download as CSV</a>
+        <a class="btn btn-primary" href="{% url 'download_iceberg_csv' file_path  %}">Download as CSV</a>
     </div>
     <div class="table-responsive">
         {{ table_html|safe }}

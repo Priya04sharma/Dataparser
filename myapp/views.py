@@ -122,13 +122,13 @@ def iceberg_table_view(request,file_path):
     try:
         df = fetch_iceberg_data(file_path)
         html_table = df.to_html(classes="table table-bordered table-striped", index=False)
-        return render(request, "iceberg_table.html", {"table_html": html_table})
+        return render(request, "iceberg_table.html", {"table_html": html_table, "file_path": file_path})
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)
 
-def download_iceberg_csv(request):
+def download_iceberg_csv(request,file_path):
     try:
-        df = fetch_iceberg_data()
+        df = fetch_iceberg_data(file_path)
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="iceberg_data.csv"'
         df.to_csv(response, index=False)
