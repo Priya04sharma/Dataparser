@@ -1,13 +1,12 @@
+
+
+
 from django.shortcuts import render, redirect
 from .forms import CSVFileForm
 from hdfs import InsecureClient
 import subprocess
-import os
-import re
-import sys
 from django.shortcuts import render
 from django.http import HttpResponse
-
 import pandas as pd
 from pyspark.sql import SparkSession
 # HDFS configuration
@@ -24,30 +23,6 @@ def upload_to_hdfs(file_obj, filename):
             writer.write(chunk)
     return f"hdfs:///{HDFS_UPLOAD_DIR.strip('/')}/{filename}"
 
-def clean_table_name(path):
-    base = os.path.splitext(os.path.basename(path))[0]
-    cleaned = re.sub(r"[^\w]", "", base)  # Remove dots, dashes, etc.
-    return f"tbl_{cleaned}" if not cleaned[0].isalpha() else cleaned
-
-
-'''def upload_csv(request):
-    if request.method == 'POST':
-        form = CSVFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = form.cleaned_data['csv_file']
-            hdfs_path = upload_to_hdfs(file, file.name)
-
-            # Trigger Spark job and wait for it to finish
-            subprocess.run([
-                'spark-submit',
-                '--master', 'spark://192.168.1.214:7077',
-                '--deploy-mode', 'client',
-                '/opt/scripts/process_djangocsv.py',
-                hdfs_path
-            ], check=True)
-
-    return redirect('view_iceberg_table', file_path=hdfs_path)
-'''
 def upload_csv(request):
     if request.method == 'POST':
         form = CSVFileForm(request.POST, request.FILES)
@@ -55,62 +30,30 @@ def upload_csv(request):
             file = form.cleaned_data['csv_file']
             hdfs_path = upload_to_hdfs(file, file.name)
 
-            # Trigger Spark job and wait for it to finish
-            subprocess.run([
+            # Trigger Spark job with local HDFS path
+            subprocess.Popen([
                 'spark-submit',
-                '--master', 'spark://192.168.1.214:7077',
+                '--master', 'spark://192.168.1.214:7077',  # Or your master IP
                 '--deploy-mode', 'client',
                 '/opt/scripts/process_djangocsv.py',
                 hdfs_path
-            ], check=True)
+            ])
 
-            return redirect('view_iceberg_table', file_path=hdfs_path)
+            return redirect('upload_success')
     else:
         form = CSVFileForm()
 
     return render(request, 'upload.html', {'form': form})
-
-
-'''def upload_csv(request):
-    if request.method == 'POST':
-        form = CSVFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = form.cleaned_data['csv_file']
-            hdfs_path = upload_to_hdfs(file, file.name)
-
-            # Trigger Spark job with local HDFS path
-          #  subprocess.Popen([
-          #      'spark-submit',
-          #      '--master', 'spark://192.168.1.214:7077',  # Or your master IP
-          #      '--deploy-mode', 'client',
-          #      '/opt/scripts/process_djangocsv.py',
-          #      hdfs_path
-          #  ])
-
-	    subprocess.run([
-    		'spark-submit',
-    		'--master', 'spark://192.168.1.214:7077',
-    		'--deploy-mode', 'client',
-    		'/opt/scripts/process_djangocsv.py',
-    		hdfs_path
-	    ], check=True)
-
-    return render(request, 'upload.html', {'form': form})                
-'''
-def fetch_iceberg_data(file_path):
+def fetch_iceberg_data():
     spark = SparkSession.builder \
         .appName("Read Iceberg Table") \
         .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
         .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
         .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
         .getOrCreate()
-    
-    table_name = clean_table_name(file_path)
-    iceberg_table = f"hadoop_cat.db.{clean_table_name(file_path)}"
-
 
     # Load data from Iceberg table
-    df_spark = spark.sql(f"SELECT * FROM {iceberg_table}")
+    df_spark = spark.sql("SELECT * FROM hadoop_cat.db.demo9")
 
     # Convert to Pandas DataFrame
     df = df_spark.toPandas()
@@ -118,9 +61,9 @@ def fetch_iceberg_data(file_path):
     spark.stop()
     return df
 
-def iceberg_table_view(request,file_path):
+def iceberg_table_view(request):
     try:
-        df = fetch_iceberg_data(file_path)
+        df = fetch_iceberg_data()
         html_table = df.to_html(classes="table table-bordered table-striped", index=False)
         return render(request, "iceberg_table.html", {"table_html": html_table})
     except Exception as e:

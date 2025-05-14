@@ -29,74 +29,30 @@ def clean_table_name(path):
     cleaned = re.sub(r"[^\w]", "", base)  # Remove dots, dashes, etc.
     return f"tbl_{cleaned}" if not cleaned[0].isalpha() else cleaned
 
-
-'''def upload_csv(request):
-    if request.method == 'POST':
-        form = CSVFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = form.cleaned_data['csv_file']
-            hdfs_path = upload_to_hdfs(file, file.name)
-
-            # Trigger Spark job and wait for it to finish
-            subprocess.run([
-                'spark-submit',
-                '--master', 'spark://192.168.1.214:7077',
-                '--deploy-mode', 'client',
-                '/opt/scripts/process_djangocsv.py',
-                hdfs_path
-            ], check=True)
-
-    return redirect('view_iceberg_table', file_path=hdfs_path)
-'''
 def upload_csv(request):
+    message = ''
+    error = ''
+    uploaded_table = request.session.get('uploaded_table_name', '')
+
     if request.method == 'POST':
-        form = CSVFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = form.cleaned_data['csv_file']
-            hdfs_path = upload_to_hdfs(file, file.name)
+        action = request.POST.get("action")
 
-            # Trigger Spark job and wait for it to finish
-            subprocess.run([
-                'spark-submit',
-                '--master', 'spark://192.168.1.214:7077',
-                '--deploy-mode', 'client',
-                '/opt/scripts/process_djangocsv.py',
-                hdfs_path
-            ], check=True)
+        if action == 'upload':
+            form = CSVFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                file = form.cleaned_data['csv_file']
+                filename = file.name
+                hdfs_path = upload_to_hdfs(file, filename)
 
-            return redirect('view_iceberg_table', file_path=hdfs_path)
-    else:
-        form = CSVFileForm()
+                base_file_name = os.path.splitext(os.path.basename(hdfs_path))[0]
+                clean_table_name = re.sub(r"[-.\s]", "", base_file_name)
 
-    return render(request, 'upload.html', {'form': form})
+                # Save paths in session
+                request.session['uploaded_hdfs_path'] = hdfs_path
+                request.session['uploaded_table_name'] = clean_table_name
 
-
-'''def upload_csv(request):
-    if request.method == 'POST':
-        form = CSVFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = form.cleaned_data['csv_file']
-            hdfs_path = upload_to_hdfs(file, file.name)
-
-            # Trigger Spark job with local HDFS path
-          #  subprocess.Popen([
-          #      'spark-submit',
-          #      '--master', 'spark://192.168.1.214:7077',  # Or your master IP
-          #      '--deploy-mode', 'client',
-          #      '/opt/scripts/process_djangocsv.py',
-          #      hdfs_path
-          #  ])
-
-	    subprocess.run([
-    		'spark-submit',
-    		'--master', 'spark://192.168.1.214:7077',
-    		'--deploy-mode', 'client',
-    		'/opt/scripts/process_djangocsv.py',
-    		hdfs_path
-	    ], check=True)
-
-    return render(request, 'upload.html', {'form': form})                
-'''
+                message = f"{filename} uploaded successfully. Click 'Process' to continue."
+                upl                
 def fetch_iceberg_data(file_path):
     spark = SparkSession.builder \
         .appName("Read Iceberg Table") \

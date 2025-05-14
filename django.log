@@ -1,0 +1,38 @@
+nohup: ignoring input
+Watching for file changes with StatReloader
+Internal Server Error: /
+Traceback (most recent call last):
+  File "/opt/python3.8/lib/python3.8/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/opt/python3.8/lib/python3.8/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/root/django_projects/dataparser/Dataparser/dataplatform/myapp/views.py", line 36, in upload_csv
+    return redirect('upload_success')
+  File "/opt/python3.8/lib/python3.8/site-packages/django/shortcuts.py", line 48, in redirect
+    return redirect_class(resolve_url(to, *args, **kwargs))
+  File "/opt/python3.8/lib/python3.8/site-packages/django/shortcuts.py", line 145, in resolve_url
+    return reverse(to, args=args, kwargs=kwargs)
+  File "/opt/python3.8/lib/python3.8/site-packages/django/urls/base.py", line 88, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/opt/python3.8/lib/python3.8/site-packages/django/urls/resolvers.py", line 828, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'upload_success' not found. 'upload_success' is not a valid view function or pattern name.
+[12/May/2025 07:33:03] "POST / HTTP/1.1" 500 85355
+  File "/opt/scripts/process_djangocsv.py", line 40
+    print(f"Successfully processed and appended data to Iceberg table: 
+                                                                      ^
+SyntaxError: EOL while scanning string literal
+25/05/12 07:33:05 INFO ShutdownHookManager: Shutdown hook called
+25/05/12 07:33:05 INFO ShutdownHookManager: Deleting directory /tmp/spark-b1a625c2-f03e-410d-9c3b-138e2521ff01
+[12/May/2025 07:33:07] "GET / HTTP/1.1" 200 456
+[12/May/2025 07:33:09] "GET / HTTP/1.1" 200 456
+Not Found: /favicon.ico
+[12/May/2025 07:33:09] "GET /favicon.ico HTTP/1.1" 404 2239
+Performing system checks...
+
+System check identified no issues (0 silenced).
+May 12, 2025 - 07:32:55
+Django version 4.2.21, using settings 'dataplatform.settings'
+Starting development server at http://0.0.0.0:8000/
+Quit the server with CONTROL-C.
+
