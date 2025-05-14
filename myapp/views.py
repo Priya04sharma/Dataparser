@@ -39,24 +39,14 @@ def upload_csv(request):
             file = form.cleaned_data['csv_file']
             hdfs_path = upload_to_hdfs(file, file.name)
 
-            # Trigger Spark job and wait for it to finish
-            subprocess.run([
-                'spark-submit',
-                '--master', 'spark://192.168.1.214:7077',
-                '--deploy-mode', 'client',
-                '/opt/scripts/process_djangocsv.py',
-                hdfs_path
-            ], check=True)
+            request.session['latest_hdfs_path'] = hdfs_path  # Save path in session
 
-            return redirect('view_iceberg_table', file_path=hdfs_path)
+            return render(request, 'loading.html')  # Show loading while Spark runs
     else:
         form = CSVFileForm()
 
-    # Fetch unprocessed CSVs from HDFS
     files = client.list(HDFS_UPLOAD_DIR)
     unprocessed_csvs = [f for f in files if f.endswith('.csv')]
-
-    # Fetch processed Iceberg tables
     iceberg_tables = list_all_iceberg_tables()
 
     return render(request, 'upload.html', {
@@ -132,3 +122,17 @@ def view_unprocessed_file(request, filename):
         })
     except Exception as e:
         return HttpResponse(f"Error reading file from HDFS: {str(e)}", status=500)
+def process_and_redirect(request):
+    hdfs_path = request.session.get('latest_hdfs_path')
+    if not hdfs_path:
+        return HttpResponse("No file to process", status=400)
+
+    subprocess.run([
+        'spark-submit',
+        '--master', 'spark://192.168.1.214:7077',
+        '--deploy-mode', 'client',
+        '/opt/scripts/process_djangocsv.py',
+        hdfs_path
+    ], check=True)
+
+    return redirect('view_iceberg_table', file_path=hdfs_path)
