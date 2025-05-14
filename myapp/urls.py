@@ -9,7 +9,9 @@ urlpatterns = [
     path('unprocessed/<str:file_name>/', views.view_unprocessed_file, name='view_unprocessed_file'),
 
     path('iceberg/download/<path:file_path>', views.download_iceberg_csv, name='download_iceberg_csv'),
-        path('view-unprocessed/<str:filename>/', views.view_unprocessed_file, name='view_unprocessed_file')
+    path('view-unprocessed/<str:filename>/', views.view_unprocessed_file, name='view_unprocessed_file'),
+    path('process/', views.process_and_redirect, name='process_and_redirect'),
+
     # path('iceberg/download/', views.download_iceberg_csv, name='download_iceberg_csv'),
 ]
 
