@@ -13,7 +13,8 @@
             <h2 class="card-title text-center text-primary mb-4">🧊 Iceberg Table Viewer</h2>
 
             <div class="text-end mb-3">
-                <a class="btn btn-success" href="{% url 'download_iceberg_csv' file_path %}">⬇️ Download as CSV</a>
+                <!-- Updated Download Button -->
+                <a class="btn btn-success" href="{% url 'download_iceberg_csv' file_path=file_path %}">⬇️ Download as CSV</a>
             </div>
 
             <div class="table-responsive">
