@@ -126,21 +126,66 @@ def list_all_iceberg_tables():
     table_names = [row['tableName'] for row in tables_df.collect()]
     spark.stop()
     return table_names
+# def view_unprocessed_file(request, filename):
+#     try:
+#         hdfs_file_path = f"{HDFS_UPLOAD_DIR}/{filename}"
+#         with client.read(hdfs_file_path, encoding='utf-8') as reader:
+#             content = reader.read()
+#         rows = content.splitlines()
+#         headers = rows[0].split(",")
+#         data_rows = [row.split(",") for row in rows[1:]]
+#         return render(request, 'view_unprocessed.html', {
+#             'filename': filename,
+#             'headers': headers,
+#             'data_rows': data_rows
+#         })
+#     except Exception as e:
+#         return HttpResponse(f"Error reading file from HDFS: {str(e)}", status=500)
+    
+from math import ceil
+def count_lines_in_hdfs_file(hdfs_file_path):
+    try:
+        with client.read(hdfs_file_path, encoding='utf-8') as reader:
+            return sum(1 for _ in reader)
+    except:
+        return 0
+ROWS_PER_PAGE = 100
+ 
 def view_unprocessed_file(request, filename):
     try:
+        page = int(request.GET.get('page', 1))
+        start_line = (page - 1) * ROWS_PER_PAGE
+        end_line = start_line + ROWS_PER_PAGE
+ 
         hdfs_file_path = f"{HDFS_UPLOAD_DIR}/{filename}"
         with client.read(hdfs_file_path, encoding='utf-8') as reader:
-            content = reader.read()
-        rows = content.splitlines()
-        headers = rows[0].split(",")
-        data_rows = [row.split(",") for row in rows[1:]]
+            all_lines = []
+            for i, line in enumerate(reader):
+                if i == 0:
+                    header = line.strip().split(",")  # first line is header
+                elif start_line <= i < end_line:
+                    all_lines.append(line.strip().split(","))
+                elif i >= end_line:
+                    break
+ 
+        # Optionally estimate total pages (for UI navigation)
+        total_lines = count_lines_in_hdfs_file(hdfs_file_path)
+        total_pages = ceil((total_lines - 1) / ROWS_PER_PAGE)  # -1 for header
+ 
         return render(request, 'view_unprocessed.html', {
             'filename': filename,
-            'headers': headers,
-            'data_rows': data_rows
+            'headers': header,
+            'data_rows': all_lines,
+            'current_page': page,
+            'total_pages': total_pages,
         })
+ 
     except Exception as e:
         return HttpResponse(f"Error reading file from HDFS: {str(e)}", status=500)
+
+
+
+
 def process_and_redirect(request):
     hdfs_path = request.session.get('latest_hdfs_path')
     if not hdfs_path:
