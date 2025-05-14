@@ -3,6 +3,7 @@ from .forms import CSVFileForm
 from hdfs import InsecureClient
 import subprocess
 from django.core.paginator import Paginator
+
 import os
 import re
 import sys
@@ -115,7 +116,7 @@ def fetch_iceberg_data(file_path):
     df_spark = spark.sql(f"SELECT * FROM {iceberg_table}")
 
     # Convert to Pandas DataFrame
-    df = df_spark.toPandas()
+    df = df_spark.limit(10).toPandas()
     spark.stop()
     return df
 
