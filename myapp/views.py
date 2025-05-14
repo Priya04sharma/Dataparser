@@ -121,20 +121,21 @@ def fetch_iceberg_data(file_path):
 
 def iceberg_table_view(request, file_path):
     try:
-        df = fetch_iceberg_data(file_path)  # Your function to get data from Iceberg
+        df = fetch_iceberg_data(file_path)
 
-        # Convert DataFrame rows to a list of dictionaries
-        data_list = df.to_dict('records')
-        columns = df.columns.tolist()
-
-        # Use Django Paginator to paginate the data (20 rows per page)
-        paginator = Paginator(data_list, 20)
-        page_number = request.GET.get('page')
+        # Pagination setup
+        paginator = Paginator(df.values.tolist(), 50)  # 50 rows per page
+        page_number = request.GET.get('page', 1)
         page_obj = paginator.get_page(page_number)
 
+        # Build table HTML using current page rows and DataFrame columns
+        table_headers = df.columns.tolist()
+        page_df = pd.DataFrame(page_obj.object_list, columns=table_headers)
+        html_table = page_df.to_html(classes="table table-bordered table-striped", index=False)
+
         return render(request, "iceberg_table.html", {
+            "table_html": html_table,
             "page_obj": page_obj,
-            "columns": columns,
             "file_path": file_path
         })
 
