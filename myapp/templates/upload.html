@@ -20,28 +20,27 @@
     </form>
 
     <br><br>
-    <!-- Dropdown for Unprocessed Files (CSV in HDFS) -->
-    <label for="unprocessedDropdown"><strong>📂 View Unprocessed Data:</strong></label>
-    <select id="unprocessedDropdown" onchange="location = this.value;">
-        <option value="#">Select a CSV file</option>
-        {% for file in unprocessed_files %}
-            <option value="{% url 'view_unprocessed_file' file %}">{{ file }}</option>
-        {% empty %}
-            <option disabled>No CSV files found</option>
-        {% endfor %}
-    </select>
+    <!-- Unprocessed Files Dropdown -->
+<label for="unprocessedDropdown"><strong>📂 View Unprocessed Data:</strong></label>
+<select id="unprocessedDropdown" onchange="location = this.value;">
+    <option value="#">Select a CSV file</option>
+    {% for file in unprocessed_files %}
+        <option value="{% url 'view_unprocessed_file' file %}">{{ file }}</option>
+    {% empty %}
+        <option disabled>No CSV files found</option>
+    {% endfor %}
+</select>
 
-    <br><br>
+<!-- Processed Iceberg Tables Dropdown -->
+<label for="processedDropdown"><strong>🧊 View Processed Data:</strong></label>
+<select id="processedDropdown" onchange="location = this.value;">
+    <option value="#">Select an Iceberg table</option>
+    {% for table in iceberg_tables %}
+        <option value="{% url 'view_iceberg_table' table %}">{{ table }}</option>
+    {% empty %}
+        <option disabled>No Iceberg tables found</option>
+    {% endfor %}
+</select>
 
-    <!-- Dropdown for Processed Iceberg Tables -->
-    <label for="processedDropdown"><strong>🧊 View Processed Data:</strong></label>
-    <select id="processedDropdown" onchange="location = this.value;">
-        <option value="#">Select an Iceberg table</option>
-        {% for table in iceberg_tables %}
-            <option value="{% url 'view_iceberg_table' table %}">{{ table }}</option>
-        {% empty %}
-            <option disabled>No Iceberg tables found</option>
-        {% endfor %}
-    </select>
 </body>
 </html>

@@ -145,6 +145,7 @@ def download_iceberg_csv(request,file_path):
         return response
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)
+    
 def list_all_iceberg_tables():
     spark = SparkSession.builder \
         .appName("List Iceberg Tables") \
@@ -157,3 +158,18 @@ def list_all_iceberg_tables():
     table_names = [row['tableName'] for row in tables_df.collect()]
     spark.stop()
     return table_names
+def view_unprocessed_file(request, filename):
+    try:
+        hdfs_file_path = f"{HDFS_UPLOAD_DIR}/{filename}"
+        with client.read(hdfs_file_path, encoding='utf-8') as reader:
+            content = reader.read()
+        rows = content.splitlines()
+        headers = rows[0].split(",")
+        data_rows = [row.split(",") for row in rows[1:]]
+        return render(request, 'view_unprocessed.html', {
+            'filename': filename,
+            'headers': headers,
+            'data_rows': data_rows
+        })
+    except Exception as e:
+        return HttpResponse(f"Error reading file from HDFS: {str(e)}", status=500)

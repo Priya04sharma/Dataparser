@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Unprocessed CSV Preview - {{ filename }}</title>
+</head>
+<body>
+    <h2>Unprocessed CSV: {{ filename }}</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                {% for header in headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data_rows %}
+                <tr>
+                    {% for col in row %}
+                        <td>{{ col }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <a href="{% url 'upload' %}">⬅️ Back to Upload Page</a>
+</body>
+</html>
