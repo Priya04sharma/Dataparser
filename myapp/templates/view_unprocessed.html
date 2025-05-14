@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
 <head>
     <title>Unprocessed CSV Preview - {{ filename }}</title>
@@ -26,4 +26,36 @@
     <br>
     <a href="{% url 'upload_csv' %}">⬅️ Back to Upload Page</a>
 </body>
-</html>
+</html> -->
+
+
+<h2>{{ filename }}</h2>
+<table class="table table-bordered">
+<thead>
+<tr>
+      {% for h in headers %}
+<th>{{ h }}</th>
+      {% endfor %}
+</tr>
+</thead>
+<tbody>
+    {% for row in data_rows %}
+<tr>
+        {% for item in row %}
+<td>{{ item }}</td>
+        {% endfor %}
+</tr>
+    {% endfor %}
+</tbody>
+</table>
+ 
+<!-- Pagination Controls -->
+<div>
+  {% if current_page > 1 %}
+<a href="?page={{ current_page|add:-1 }}">Previous</a>
+  {% endif %}
+  Page {{ current_page }} of {{ total_pages }}
+  {% if current_page < total_pages %}
+<a href="?page={{ current_page|add:1 }}">Next</a>
+  {% endif %}
+</div>
