@@ -7,7 +7,8 @@ import re
 import sys
 from django.shortcuts import render
 from django.http import HttpResponse
-
+from .utility import get_spark_session
+spark = get_spark_session()
 import pandas as pd
 from pyspark.sql import SparkSession
 # HDFS configuration
@@ -30,24 +31,7 @@ def clean_table_name(path):
     return f"tbl_{cleaned}" if not cleaned[0].isalpha() else cleaned
 
 
-'''def upload_csv(request):
-    if request.method == 'POST':
-        form = CSVFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = form.cleaned_data['csv_file']
-            hdfs_path = upload_to_hdfs(file, file.name)
 
-            # Trigger Spark job and wait for it to finish
-            subprocess.run([
-                'spark-submit',
-                '--master', 'spark://192.168.1.214:7077',
-                '--deploy-mode', 'client',
-                '/opt/scripts/process_djangocsv.py',
-                hdfs_path
-            ], check=True)
-
-    return redirect('view_iceberg_table', file_path=hdfs_path)
-'''
 def upload_csv(request):
     if request.method == 'POST':
         form = CSVFileForm(request.POST, request.FILES)
@@ -82,32 +66,7 @@ def upload_csv(request):
     })
 
 
-'''def upload_csv(request):
-    if request.method == 'POST':
-        form = CSVFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = form.cleaned_data['csv_file']
-            hdfs_path = upload_to_hdfs(file, file.name)
 
-            # Trigger Spark job with local HDFS path
-          #  subprocess.Popen([
-          #      'spark-submit',
-          #      '--master', 'spark://192.168.1.214:7077',  # Or your master IP
-          #      '--deploy-mode', 'client',
-          #      '/opt/scripts/process_djangocsv.py',
-          #      hdfs_path
-          #  ])
-
-	    subprocess.run([
-    		'spark-submit',
-    		'--master', 'spark://192.168.1.214:7077',
-    		'--deploy-mode', 'client',
-    		'/opt/scripts/process_djangocsv.py',
-    		hdfs_path
-	    ], check=True)
-
-    return render(request, 'upload.html', {'form': form})                
-'''
 def fetch_iceberg_data(file_path):
     spark = SparkSession.builder \
         .appName("Read Iceberg Table") \
