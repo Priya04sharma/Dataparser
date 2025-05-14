@@ -115,7 +115,7 @@ def fetch_iceberg_data(file_path):
     df_spark = spark.sql(f"SELECT * FROM {iceberg_table}")
 
     # Convert to Pandas DataFrame
-    df = df_spark.limit(10).toPandas()
+    df = df_spark.toPandas()
     spark.stop()
     return df
 
