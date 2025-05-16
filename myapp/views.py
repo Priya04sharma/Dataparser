@@ -306,16 +306,26 @@ def process_and_redirect(request):
     ], check=True)
 
     return redirect('view_iceberg_table', file_path=hdfs_path)
+
+import subprocess
+import time
 from django.shortcuts import render
 from .forms import CSVFileForm
-from .hdfs_utils import upload_to_hdfs
-import subprocess
+from .hdfs_utils import upload_to_hdfs, list_files_in_dir
+
+SEGREGATED_DIRS = {
+    'csv': 'hdfs:///Files/csv',
+    'json': 'hdfs:///Files/json',
+    'pdf': 'hdfs:///Files/pdf',
+    'xml': 'hdfs:///Files/xml',
+}
 
 def run_file_segregation():
-    subprocess.Popen(["spark-submit", "/opt/script/segregate_files.py"])
+    subprocess.run(["spark-submit", "/opt/script/segregate_files.py"])
 
 def segregate_files(request):
     message = error = None
+    files_by_type = {}
 
     if request.method == 'POST':
         form = CSVFileForm(request.POST, request.FILES)
@@ -324,8 +334,9 @@ def segregate_files(request):
             try:
                 for f in files:
                     upload_to_hdfs(f, f.name)
-                run_file_segregation()
-                message = "Files uploaded and segregation started successfully."
+
+                # Optional loading screen
+                return render(request, 'loading.html', {'redirect_url': '/segregate/trigger/'})
             except Exception as e:
                 error = str(e)
         else:
@@ -333,8 +344,17 @@ def segregate_files(request):
     else:
         form = CSVFileForm()
 
+    for ftype, hdfs_path in SEGREGATED_DIRS.items():
+        files_by_type[ftype] = list_files_in_dir(hdfs_path)
+
     return render(request, 'segregate.html', {
         'form': form,
         'message': message,
-        'error': error
+        'error': error,
+        'files_by_type': files_by_type,
     })
+
+def trigger_segregation(request):
+    run_file_segregation()
+    time.sleep(3)  # Optional delay before reloading results
+    return render(request, 'redirect.html', {'redirect_url': '/segregate/'})
