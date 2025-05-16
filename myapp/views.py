@@ -306,3 +306,35 @@ def process_and_redirect(request):
     ], check=True)
 
     return redirect('view_iceberg_table', file_path=hdfs_path)
+from django.shortcuts import render
+from .forms import CSVFileForm
+from .hdfs_utils import upload_to_hdfs
+import subprocess
+
+def run_file_segregation():
+    subprocess.Popen(["spark-submit", "/opt/script/segregate_files.py"])
+
+def segregate_files(request):
+    message = error = None
+
+    if request.method == 'POST':
+        form = CSVFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            files = request.FILES.getlist('uploaded_files')
+            try:
+                for f in files:
+                    upload_to_hdfs(f, f.name)
+                run_file_segregation()
+                message = "Files uploaded and segregation started successfully."
+            except Exception as e:
+                error = str(e)
+        else:
+            error = "Invalid form submission."
+    else:
+        form = CSVFileForm()
+
+    return render(request, 'segregate.html', {
+        'form': form,
+        'message': message,
+        'error': error
+    })

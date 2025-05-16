@@ -13,6 +13,7 @@ urlpatterns = [
     path('process/', views.process_and_redirect, name='process_and_redirect'),
 
     # path('iceberg/download/', views.download_iceberg_csv, name='download_iceberg_csv'),
+    path('segregate/', views.segregate_files, name='segregate_files'),
 ]
 
 
