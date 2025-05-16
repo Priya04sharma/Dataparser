@@ -2,7 +2,7 @@ from django import forms
 
 class CSVFileForm(forms.Form):
     uploaded_files = forms.FileField(
-        widget=forms.ClearableFileInput(attrs={'multiple': True}),
+        widget=forms.FileInput(attrs={'multiple': True}),
         label="Choose Files",
         required=True
     )
