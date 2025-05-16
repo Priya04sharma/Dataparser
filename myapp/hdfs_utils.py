@@ -2,7 +2,7 @@ from hdfs import InsecureClient
 import os
 
 HDFS_WEB_URL = 'http://192.168.1.214:9870'
-HDFS_UPLOAD_DIR = '/Files'
+HDFS_UPLOAD_DIR = '/Files/multiple_files'
 HDFS_USER = 'root'
 
 client = InsecureClient(HDFS_WEB_URL, user=HDFS_USER)
