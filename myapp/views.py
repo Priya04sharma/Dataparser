@@ -311,7 +311,8 @@ import subprocess
 import time
 from django.shortcuts import render
 from .forms import CSVFileForm
-#from .hdfs_utils import upload_to_hdfs, list_files_in_dir
+from myapp.hdfs_utils import upload_to_hdfs, list_files_in_dir
+
 
 SEGREGATED_DIRS = {
     'csv': 'hdfs:///Files/csv',
