@@ -331,9 +331,12 @@ def segregate_files(request):
     if request.method == 'POST':
         form = CSVFileForm(request.POST, request.FILES)
         if form.is_valid():
+            print("Form is validssssssssssssssssssssssssssssssssssssssssssssssssssss")
             files = request.FILES.getlist('uploaded_files')
             try:
+                
                 for f in files:
+                    print("Files to uploadssssssssssssssssssssssssseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee: ", f.name)
                     upload_to_hdfs(f, f.name)
 
                 # Optional loading screen
