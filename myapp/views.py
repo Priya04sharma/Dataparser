@@ -61,16 +61,16 @@ def upload_csv(request):
     if request.method == 'POST':
         form = CSVFileForm(request.POST, request.FILES)
         if form.is_valid():
-            files = request.FILES.getlist('uploaded_files')
+            uploaded_files = request.FILES.getlist('uploaded_files')
             hdfs_paths = []
 
-            for file in files:
+            for file in uploaded_files:
                 hdfs_path = upload_to_hdfs(file, file.name)
                 hdfs_paths.append(hdfs_path)
 
-            request.session['latest_hdfs_paths'] = hdfs_paths  # Save all paths in session
+            request.session['latest_hdfs_paths'] = hdfs_paths
 
-            return render(request, 'loading.html')  # Show loading while Spark runs
+            return render(request, 'loading.html')
     else:
         form = CSVFileForm()
 
@@ -83,6 +83,7 @@ def upload_csv(request):
         'unprocessed_files': unprocessed_csvs,
         'iceberg_tables': iceberg_tables,
     })
+
 
 
 def fetch_iceberg_data(file_path):
