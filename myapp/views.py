@@ -292,6 +292,8 @@ def view_unprocessed_file(request, filename):
 
 def process_and_redirect(request):
     hdfs_path = request.session.get('latest_hdfs_path')
+    print(f"Processing file at: {hdfs_path}")
+    print("qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq")
     if not hdfs_path:
         return HttpResponse("No file to process", status=400)
 
