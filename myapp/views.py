@@ -322,7 +322,7 @@ SEGREGATED_DIRS = {
 }
 
 def run_file_segregation():
-    subprocess.run(["spark-submit", "/opt/script/segregate_files.py"])
+    subprocess.run(["spark-submit", "/opt/script/segregation_code.py"])
 
 def segregate_files(request):
     message = error = None
@@ -331,7 +331,7 @@ def segregate_files(request):
     if request.method == 'POST':
         form = CSVFileForm(request.POST, request.FILES)
         if form.is_valid():
-            files = request.FILES.getlist('uploaded_files')
+            files = request.FILES.getlist('files')
             try:
                 for f in files:
                     upload_to_hdfs(f, f.name)
