@@ -34,41 +34,16 @@ def clean_table_name(path):
 
 
 
-# def upload_csv(request):
-#     if request.method == 'POST':
-#         form = CSVFileForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             file = form.cleaned_data['csv_file']
-#             hdfs_path = upload_to_hdfs(file, file.name)
-
-#             request.session['latest_hdfs_path'] = hdfs_path  # Save path in session
-
-#             return render(request, 'loading.html')  # Show loading while Spark runs
-#     else:
-#         form = CSVFileForm()
-
-#     files = client.list(HDFS_UPLOAD_DIR)
-#     unprocessed_csvs = [f for f in files if f.endswith('.csv')]
-#     iceberg_tables = list_all_iceberg_tables()
-
-#     return render(request, 'upload.html', {
-#         'form': form,
-#         'unprocessed_files': unprocessed_csvs,
-#         'iceberg_tables': iceberg_tables,
-#     })
-
 def upload_csv(request):
     if request.method == 'POST':
-        form = CSVFileForm(request.POST)
+        form = CSVFileForm(request.POST, request.FILES)
         if form.is_valid():
-            files = request.FILES.getlist('uploaded_files')
-            if not files:
-                # handle error, e.g. show message
-                return render(request, 'upload.html', {'form': form, 'error': 'Please upload at least one file.'})
+            file = form.cleaned_data['csv_file']
+            hdfs_path = upload_to_hdfs(file, file.name)
 
-            for file in files:
-                upload_to_hdfs(file, file.name)
-            return render(request, 'loading.html')
+            request.session['latest_hdfs_path'] = hdfs_path  # Save path in session
+
+            return render(request, 'loading.html')  # Show loading while Spark runs
     else:
         form = CSVFileForm()
 
@@ -81,6 +56,31 @@ def upload_csv(request):
         'unprocessed_files': unprocessed_csvs,
         'iceberg_tables': iceberg_tables,
     })
+
+# def upload_csv(request):
+#     if request.method == 'POST':
+#         form = CSVFileForm(request.POST)
+#         if form.is_valid():
+#             files = request.FILES.getlist('uploaded_files')
+#             if not files:
+#                 # handle error, e.g. show message
+#                 return render(request, 'upload.html', {'form': form, 'error': 'Please upload at least one file.'})
+
+#             for file in files:
+#                 upload_to_hdfs(file, file.name)
+#             return render(request, 'loading.html')
+#     else:
+#         form = CSVFileForm()
+
+#     files = client.list(HDFS_UPLOAD_DIR)
+#     unprocessed_csvs = [f for f in files if f.endswith('.csv')]
+#     iceberg_tables = list_all_iceberg_tables()
+
+#     return render(request, 'upload.html', {
+#         'form': form,
+#         'unprocessed_files': unprocessed_csvs,
+#         'iceberg_tables': iceberg_tables,
+#     })
 
 
 
