@@ -20,12 +20,12 @@ HDFS_USER = 'root'
 
 client = InsecureClient(HDFS_WEB_URL, user=HDFS_USER)
 
-def upload_to_hdfs(file_obj, filename):
-    hdfs_path = f"{HDFS_UPLOAD_DIR}/{filename}"
-    with client.write(hdfs_path, overwrite=True) as writer:
-        for chunk in file_obj.chunks():
-            writer.write(chunk)
-    return f"hdfs:///{HDFS_UPLOAD_DIR.strip('/')}/{filename}"
+# def upload_to_hdfs(file_obj, filename):
+#     hdfs_path = f"{HDFS_UPLOAD_DIR}/{filename}"
+#     with client.write(hdfs_path, overwrite=True) as writer:
+#         for chunk in file_obj.chunks():
+#             writer.write(chunk)
+#     return f"hdfs:///{HDFS_UPLOAD_DIR.strip('/')}/{filename}"
 
 def clean_table_name(path):
     base = os.path.splitext(os.path.basename(path))[0]
