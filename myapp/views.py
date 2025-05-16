@@ -59,17 +59,15 @@ def clean_table_name(path):
 
 def upload_csv(request):
     if request.method == 'POST':
-        form = CSVFileForm(request.POST, request.FILES)
+        form = CSVFileForm(request.POST)
         if form.is_valid():
-            uploaded_files = request.FILES.getlist('uploaded_files')
-            hdfs_paths = []
+            files = request.FILES.getlist('uploaded_files')
+            if not files:
+                # handle error, e.g. show message
+                return render(request, 'upload.html', {'form': form, 'error': 'Please upload at least one file.'})
 
-            for file in uploaded_files:
-                hdfs_path = upload_to_hdfs(file, file.name)
-                hdfs_paths.append(hdfs_path)
-
-            request.session['latest_hdfs_paths'] = hdfs_paths
-
+            for file in files:
+                upload_to_hdfs(file, file.name)
             return render(request, 'loading.html')
     else:
         form = CSVFileForm()
