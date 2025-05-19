@@ -428,14 +428,18 @@ def get_hdfs_files():
             print(f"Error reading {path}: {e}")
             continue
     return files
+
+
 def segregate_view(request):
     message = error = None
 
     if request.method == 'POST':
-        # handle file upload logic here (already done, I assume)
+        # your file upload & segregation logic here
         message = "Files uploaded and segregated successfully!"
 
-    input_files = get_hdfs_files()  # from step 1
+    input_files = get_hdfs_files()  # fetch list of files from HDFS
+    print(f"Files fetched from HDFS: {input_files}")
+
     return render(request, 'segregate.html', {
         'input_files': input_files,
         'message': message,
