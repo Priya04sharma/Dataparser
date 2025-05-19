@@ -3,7 +3,11 @@ from .forms import CSVFileForm
 from hdfs import InsecureClient
 import subprocess
 from django.core.paginator import Paginator
-
+import subprocess
+import time
+from django.shortcuts import render
+from .forms import CSVFileForm
+from myapp.hdfs_utils import upload_to_hdfs, list_files_in_dir,list_all_segregated_files
 import os
 import re
 import sys
@@ -307,11 +311,7 @@ def process_and_redirect(request):
 
     return redirect('view_iceberg_table', file_path=hdfs_path)
 
-import subprocess
-import time
-from django.shortcuts import render
-from .forms import CSVFileForm
-from myapp.hdfs_utils import upload_to_hdfs, list_files_in_dir
+
 
 
 SEGREGATED_DIRS = {
@@ -369,3 +369,7 @@ def trigger_segregation(request):
     run_file_segregation()
     time.sleep(3)  # Optional delay before reloading results
     return render(request, 'redirect.html', {'redirect_url': '/segregate/'})
+
+def segregate_view(request):
+    input_files = list_all_segregated_files()
+    return render(request, 'segregate.html', {'input_files': input_files})

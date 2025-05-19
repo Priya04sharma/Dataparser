@@ -26,6 +26,11 @@
         <button type="submit" class="btn btn-success mt-3">⬆️ Upload & Segregate</button>
     </div>
 </form>
+<select class="form-select mt-3">
+  {% for folder, file in input_files %}
+    <option>{{ folder }}/{{ file }}</option>
+  {% endfor %}
+</select>
 
     </div>
 </div>

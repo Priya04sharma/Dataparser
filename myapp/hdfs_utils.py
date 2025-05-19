@@ -1,5 +1,6 @@
 from hdfs import InsecureClient
 import os
+import subprocess
 
 HDFS_WEB_URL = 'http://192.168.1.214:9870'
 HDFS_UPLOAD_DIR = '/Files/multiple_files'
@@ -22,3 +23,19 @@ def list_files_in_dir(hdfs_path):
     except Exception as e:
         print(f"Error listing files in HDFS path {hdfs_path}: {e}")
         return []
+def list_all_segregated_files(base_path='/segregated/'):
+    file_list = []
+    for folder in ['csv', 'json', 'pdf', 'xml']:
+        try:
+            result = subprocess.run(
+                ['hdfs', 'dfs', '-ls', f'{base_path}{folder}/'],
+                capture_output=True, text=True, check=True
+            )
+            for line in result.stdout.split('\n'):
+                if line.strip() and not line.startswith('Found'):
+                    parts = line.split()
+                    file_path = parts[-1]
+                    file_list.append((folder, file_path.split('/')[-1]))
+        except subprocess.CalledProcessError:
+            continue
+    return file_list
