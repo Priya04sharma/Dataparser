@@ -32,7 +32,7 @@ fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(hadoop_conf)
 
 r = redis.Redis(host='localhost', port=6379, db=0)
 
-qname = 'hdfsfiles'
+qname = 'xmlfiles'
  
  
 sz = r.llen(qname)
