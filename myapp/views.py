@@ -405,7 +405,7 @@ def trigger_segregation(request):
 from hdfs import InsecureClient
 
 def get_hdfs_files():
-    client = InsecureClient('http://localhost:9870', user='hdfs')  # adjust hostname and port
+    client = InsecureClient('http://192.168.1.214:9870', user='hdfs')  # adjust hostname and port
     base_dirs = [
         '/Files/csv/', '/Files/json/', '/Files/pdf/', '/Files/xml/',
         '/Files/csv/processed/', '/Files/json/processed/', '/Files/pdf/processed/', '/Files/xml/processed/'
