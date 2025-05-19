@@ -9,42 +9,70 @@
             margin-bottom: 2rem;
         }
         .folder-title {
-            font-weight: 600;
-            font-size: 1.2rem;
+            font-weight: 700;
+            font-size: 1.3rem;
             color: #0c6e7d;
+            border-bottom: 2px solid #0c6e7d;
+            padding-bottom: 0.3rem;
+            margin-bottom: 1rem;
         }
         .file-badge {
-            margin: 2px;
+            margin: 4px 4px 4px 0;
+            padding: 0.4em 0.8em;
+            font-size: 0.9rem;
+            cursor: default;
+            user-select: none;
+            border-radius: 0.4rem;
+            transition: background-color 0.3s ease;
+        }
+        .file-badge:hover {
+            background-color: #0c6e7d;
+            color: white;
+        }
+        .unprocessed-section {
+            border-right: 1px solid #dee2e6;
+            padding-right: 1.5rem;
+        }
+        @media (max-width: 576px) {
+            .unprocessed-section {
+                border-right: none;
+                padding-right: 0;
+                margin-bottom: 1rem;
+            }
+        }
+        h6 {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
         }
     </style>
 </head>
 <body>
-<div class="container mt-5">
-    <h2 class="text-center text-primary mb-4">📦 Uploaded & Segregated Files</h2>
+<div class="container mt-5 mb-5">
+    <h2 class="text-center text-primary mb-5">📦 Uploaded & Segregated Files</h2>
 
     {% for folder, files in folder_files.items %}
-    <div class="card folder-section shadow-sm p-3">
+    <div class="card folder-section shadow-sm p-4">
         <div class="folder-title">📁 {{ folder|upper }}</div>
 
-        <div class="row mt-2">
-            <div class="col-md-6">
+        <div class="row">
+            <div class="col-md-6 unprocessed-section">
                 <h6 class="text-success">Unprocessed:</h6>
                 {% if files.base %}
                     {% for f in files.base %}
-                        <span class="badge bg-secondary file-badge">{{ f }}</span>
+                        <span class="badge bg-secondary file-badge" title="{{ f }}">{{ f }}</span>
                     {% endfor %}
                 {% else %}
-                    <p class="text-muted">No unprocessed files</p>
+                    <p class="text-muted fst-italic">No unprocessed files</p>
                 {% endif %}
             </div>
             <div class="col-md-6">
                 <h6 class="text-info">✅ Processed:</h6>
                 {% if files.processed %}
                     {% for pf in files.processed %}
-                        <span class="badge bg-primary file-badge">{{ pf }}</span>
+                        <span class="badge bg-primary file-badge" title="{{ pf }}">{{ pf }}</span>
                     {% endfor %}
                 {% else %}
-                    <p class="text-muted">No processed files</p>
+                    <p class="text-muted fst-italic">No processed files</p>
                 {% endif %}
             </div>
         </div>
