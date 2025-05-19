@@ -346,7 +346,8 @@ def segregate_files(request):
                 
             ], check=True)
                         # Optional loading screen
-                return render(request, 'loading.html', {'redirect_url': '/segregate/trigger/'})
+                # return render(request, 'loading.html', {'redirect_url': '/segregate/trigger/'})
+                return render(request, 'redirect.html')
             except Exception as e:
                 error = str(e)
         else:
