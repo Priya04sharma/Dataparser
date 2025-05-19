@@ -370,6 +370,31 @@ def trigger_segregation(request):
     time.sleep(3)  # Optional delay before reloading results
     return render(request, 'redirect.html', {'redirect_url': '/segregate/'})
 
+from hdfs import InsecureClient
+from django.conf import settings
+from django.shortcuts import render
+
 def segregate_view(request):
-    input_files = list_all_segregated_files()
-    return render(request, 'segregate.html', {'input_files': input_files})
+   
+    # Folders to check
+    folders = ['csv', 'json', 'pdf', 'xml']
+    base_hdfs_path = '/Files'
+
+    input_files = []
+
+    for folder in folders:
+        folder_path = f'{base_hdfs_path}/{folder}'
+        try:
+            files = hdfs_client.list(folder_path)
+            for f in files:
+                input_files.append((folder, f))
+        except Exception as e:
+            # Handle missing folders or errors gracefully
+            pass
+
+    # If POST upload logic here to save files to HDFS...
+
+    return render(request, 'segregate.html', {
+        'input_files': input_files,
+        # Add other context variables like 'message' or 'error'
+    })
