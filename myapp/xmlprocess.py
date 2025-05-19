@@ -20,6 +20,7 @@ spark = (
     .config("spark.executor.memory", "4g")
     .config("spark.executor.cores", "2")
     .config("spark.cores.max", "8")
+    .config("spark.jars.packages", "com.databricks:spark-xml_2.12:0.15.0")
     .getOrCreate()
 )
 
@@ -40,9 +41,10 @@ for _ in range(sz):
     file = r.lpop(qname)
     file = file.decode()
 
-    print("Processing File:", file)
+    print("Processing Filewwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww:", file)
 
     path_to_process = f"hdfs:///Files/multiple_files/{file}"
+    print(path_to_process)
 
     df = (
         spark.read.format("xml")
