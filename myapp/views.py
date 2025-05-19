@@ -375,8 +375,6 @@ from django.conf import settings
 from django.shortcuts import render
 
 def segregate_view(request):
-   
-    # Folders to check
     folders = ['csv', 'json', 'pdf', 'xml']
     base_hdfs_path = '/Files'
 
@@ -387,14 +385,17 @@ def segregate_view(request):
         try:
             files = hdfs_client.list(folder_path)
             for f in files:
-                input_files.append((folder, f))
+                ext = f.split('.')[-1].lower()  # get file extension in lowercase
+                input_files.append({
+                    'folder': folder,
+                    'filename': f,
+                    'ext': ext,
+                })
         except Exception as e:
-            # Handle missing folders or errors gracefully
             pass
 
-    # If POST upload logic here to save files to HDFS...
+    # Handle POST upload logic here...
 
     return render(request, 'segregate.html', {
         'input_files': input_files,
-        # Add other context variables like 'message' or 'error'
     })
