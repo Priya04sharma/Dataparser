@@ -371,33 +371,73 @@ def trigger_segregation(request):
     return render(request, 'redirect.html', {'redirect_url': '/segregate/'})
 
 
-def segregate_view(request):
-    folders = ['csv', 'json', 'pdf', 'xml']
-    base_hdfs_path = '/Files'
+# def segregate_view(request):
+#     folders = ['csv', 'json', 'pdf', 'xml']
+#     base_hdfs_path = '/Files'
 
-    input_files = []
+#     input_files = []
 
-    for folder in folders:
-        for subfolder in ['', 'processed']:  # "" means base folder, 'processed' means subfolder
-            folder_path = f'{base_hdfs_path}/{folder}'
-            if subfolder:
-                folder_path += f'/{subfolder}'
+#     for folder in folders:
+#         for subfolder in ['', 'processed']:  # "" means base folder, 'processed' means subfolder
+#             folder_path = f'{base_hdfs_path}/{folder}'
+#             if subfolder:
+#                 folder_path += f'/{subfolder}'
 
-            try:
-                files = hdfs_client.list(folder_path)
-                for f in files:
-                    ext = f.split('.')[-1].lower()
-                    input_files.append({
-                        'folder': folder,
-                        'subfolder': subfolder if subfolder else 'raw',
-                        'filename': f,
-                        'ext': ext,
-                        'path': f'{folder_path}/{f}',
+#             try:
+#                 files = hdfs_client.list(folder_path)
+#                 for f in files:
+#                     ext = f.split('.')[-1].lower()
+#                     input_files.append({
+#                         'folder': folder,
+#                         'subfolder': subfolder if subfolder else 'raw',
+#                         'filename': f,
+#                         'ext': ext,
+#                         'path': f'{folder_path}/{f}',
+#                     })
+#             except Exception as e:
+#                 # Log if needed
+#                 pass
+
+#     return render(request, 'segregate.html', {
+#         'input_files': input_files,
+#     })
+
+from hdfs import InsecureClient
+
+def get_hdfs_files():
+    client = InsecureClient('http://localhost:9870', user='hdfs')  # adjust hostname and port
+    base_dirs = [
+        '/Files/csv/', '/Files/json/', '/Files/pdf/', '/Files/xml/',
+        '/Files/csv/processed/', '/Files/json/processed/', '/Files/pdf/processed/', '/Files/xml/processed/'
+    ]
+
+    files = []
+    for path in base_dirs:
+        try:
+            file_list = client.list(path)
+            for file in file_list:
+                if not file.startswith('_') and not file.startswith('.'):
+                    files.append({
+                        'folder': path.split('/')[2],  # csv, json, pdf, xml
+                        'subfolder': 'processed' if 'processed' in path else 'raw',
+                        'filename': file,
+                        'ext': file.split('.')[-1],
+                        'path': path + file
                     })
-            except Exception as e:
-                # Log if needed
-                pass
+        except Exception as e:
+            print(f"Error reading {path}: {e}")
+            continue
+    return files
+def segregate_view(request):
+    message = error = None
 
+    if request.method == 'POST':
+        # handle file upload logic here (already done, I assume)
+        message = "Files uploaded and segregated successfully!"
+
+    input_files = get_hdfs_files()  # from step 1
     return render(request, 'segregate.html', {
         'input_files': input_files,
+        'message': message,
+        'error': error,
     })
