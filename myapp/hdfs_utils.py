@@ -39,3 +39,45 @@ def list_all_segregated_files(base_path='/segregated/'):
         except subprocess.CalledProcessError:
             continue
     return file_list
+from hdfs import InsecureClient
+
+def get_hdfs_files_with_content():
+    # Connect to HDFS WebHDFS (adjust hostname and port)
+    client = InsecureClient('http://192.168.1.214:9870', user='hdfs')
+
+    base_dirs = [
+        '/Files/csv/',
+        '/Files/json/',
+        '/Files/pdf/',
+        '/Files/xml/',
+        '/Files/csv/processed/',
+        '/Files/json/processed/',
+        '/Files/pdf/processed/',
+        '/Files/xml/processed/',
+    ]
+
+    files = []
+    for path in base_dirs:
+        try:
+            file_list = client.list(path)
+            for filename in file_list:
+                full_path = f"{path}{filename}"
+                ext = filename.split('.')[-1].lower()
+                try:
+                    # Read first 1000 characters from each file (to avoid loading big files fully)
+                    with client.read(full_path, encoding='utf-8') as reader:
+                        content = reader.read(1000)
+                except Exception as e:
+                    content = f"Error reading content: {e}"
+
+                files.append({
+                    'folder': path.strip('/').split('/')[1],   # csv, json, etc.
+                    'subfolder': 'processed' if 'processed' in path else 'raw',
+                    'filename': filename,
+                    'ext': ext,
+                    'content': content,
+                })
+        except Exception as e:
+            print(f"Error reading from {path}: {e}")
+            continue
+    return files
