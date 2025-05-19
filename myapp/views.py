@@ -348,14 +348,21 @@ def segregate_files(request):
                     print("Files to uploadssssssssssssssssssssssssseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee: ", f.name)
                     r.lpush(qname,f.name)
                     upload_to_hdfs(f, f.name)
-                subprocess.run([
-                'spark-submit',
-                '--packages com.databricks:spark-xml_2.12:0.15.0',
-                '--master', 'spark://192.168.1.214:7077',
-                '--deploy-mode', 'client',
-                '/dataplatform/myapp/xmlprocess.py',
+            #     subprocess.run([
+            #     'spark-submit',
+            #     '--packages com.databricks:spark-xml_2.12:0.15.0',
+            #     '--master', 'spark://192.168.1.214:7077',
+            #     '--deploy-mode', 'client',
+            #     '/dataplatform/myapp/xmlprocess.py',
                 
-            ], check=True)
+            # ], check=True)
+                subprocess.run([
+                    'spark-submit',
+                    '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+                         '--master', 'spark://192.168.1.214:7077',
+                    '--deploy-mode', 'client',
+                    '/dataplatform/myapp/xmlprocess.py',
+                    ], check=True)
                         # Optional loading screen
                 # return render(request, 'loading.html', {'redirect_url': '/segregate/trigger/'})
                 return render(request, 'redirect.html')
