@@ -166,34 +166,20 @@
             </div>
         </form>
 
-        {% if input_files %}
-        <div class="mt-5">
-            <h5 class="text-secondary">📂 Uploaded Input Files ({{ input_files|length }})</h5>
-            <div class="uploaded-list mt-3">
-                {% for file in input_files %}
-                    <div class="uploaded-item">
-                        {% if file.ext == "csv" %}
-                            <i class="bi bi-file-earmark-spreadsheet-fill text-success file-icon"></i>
-                        {% elif file.ext == "json" %}
-                            <i class="bi bi-braces text-warning file-icon"></i>
-                        {% elif file.ext == "xml" %}
-                            <i class="bi bi-code-slash text-info file-icon"></i>
-                        {% elif file.ext == "pdf" %}
-                            <i class="bi bi-file-earmark-pdf-fill text-danger file-icon"></i>
-                        {% else %}
-                            <i class="bi bi-file-earmark-fill file-icon"></i>
-                        {% endif %}
-                        <span>{{ file.folder }}/{{ file.filename }}</span>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% else %}
-            <div class="mt-4 text-muted text-center">
-                No files uploaded yet.
-            </div>
-        {% endif %}
-    </div>
-</div>
+      {% for file in input_files %}
+  {% if file.ext == "csv" %}
+    <i class="bi bi-file-earmark-spreadsheet-fill text-success file-icon"></i>
+  {% elif file.ext == "json" %}
+    <i class="bi bi-braces text-warning file-icon"></i>
+  {% elif file.ext == "xml" %}
+    <i class="bi bi-code-slash text-info file-icon"></i>
+  {% elif file.ext == "pdf" %}
+    <i class="bi bi-file-earmark-pdf-fill text-danger file-icon"></i>
+  {% else %}
+    <i class="bi bi-file-earmark-fill file-icon"></i>
+  {% endif %}
+  <span>{{ file.folder }}/{{ file.filename }}</span>
+{% endfor %}
+
 </body>
 </html>

@@ -370,9 +370,6 @@ def trigger_segregation(request):
     time.sleep(3)  # Optional delay before reloading results
     return render(request, 'redirect.html', {'redirect_url': '/segregate/'})
 
-from hdfs import InsecureClient
-from django.conf import settings
-from django.shortcuts import render
 
 def segregate_view(request):
     folders = ['csv', 'json', 'pdf', 'xml']
@@ -392,9 +389,10 @@ def segregate_view(request):
                     'ext': ext,
                 })
         except Exception as e:
+            # You can log the error here if needed
             pass
 
-    # Handle POST upload logic here...
+    # TODO: Handle POST upload logic here...
 
     return render(request, 'segregate.html', {
         'input_files': input_files,
