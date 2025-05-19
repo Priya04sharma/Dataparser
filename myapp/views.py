@@ -338,13 +338,13 @@ def segregate_files(request):
                 for f in files:
                     print("Files to uploadssssssssssssssssssssssssseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee: ", f.name)
                     upload_to_hdfs(f, f.name)
-            #     subprocess.run([
-            #     'spark-submit',
-            #     '--master', 'spark://192.168.1.214:7077',
-            #     '--deploy-mode', 'client',
-            #     '/opt/scripts/segregation_code.py',
+                subprocess.run([
+                'spark-submit',
+                '--master', 'spark://192.168.1.214:7077',
+                '--deploy-mode', 'client',
+                '/dataplatform/myapp/xmlprocess.py',
                 
-            # ], check=True)
+            ], check=True)
                         # Optional loading screen
                 # return render(request, 'loading.html', {'redirect_url': '/segregate/trigger/'})
                 return render(request, 'redirect.html')
