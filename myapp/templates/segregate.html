@@ -19,103 +19,6 @@
         }
         .file-icon {
             margin-right: 8px;
-        }
-        .uploaded-list {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 1rem;
-            background: #f8f9fa;
-        }
-        .uploaded-item {
-            padding: 0.4rem 0.6rem;
-            border-bottom: 1px solid #ddd;
-            display: flex;
-            align-items: center;
-        }
-        .uploaded-item:last-child {
-            border-bottom: none;
-        }
-    </style>
-</head>
-<body>
-<div class="container mt-5">
-    <div class="card shadow-lg p-5">
-        <h3 class="text-center text-primary mb-4">📁 Upload Files to Segregate</h3>
-
-        {% if message %}
-            <div class="alert alert-success mt-2 text-center">{{ message }}</div>
-        {% elif error %}
-            <div class="alert alert-danger mt-2 text-center">{{ error }}</div>
-        {% endif %}
-
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label for="fileInput" class="form-label">Choose files to upload</label>
-                <input type="file" name="files" id="fileInput" class="form-control" multiple required>
-                <div class="upload-hint mt-1">You can select multiple files: CSV, JSON, PDF, XML, etc.</div>
-            </div>
-            <div class="text-center">
-                <button type="submit" class="btn btn-success px-4 py-2 mt-3">
-                    ⬆️ Upload & Segregate
-                </button>
-            </div>
-        </form>
-
-        {% if input_files %}
-        <div class="mt-5">
-            <h5 class="text-secondary">📂 Uploaded Input Files ({{ input_files|length }})</h5>
-            <div class="uploaded-list mt-3">
-                {% for folder, file in input_files %}
-                    <div class="uploaded-item">
-                        {% if file.endswith(".csv") %}
-                            <i class="bi bi-file-earmark-spreadsheet-fill text-success file-icon"></i>
-                        {% elif file.endswith(".json") %}
-                            <i class="bi bi-braces text-warning file-icon"></i>
-                        {% elif file.endswith(".xml") %}
-                            <i class="bi bi-code-slash text-info file-icon"></i>
-                        {% elif file.endswith(".pdf") %}
-                            <i class="bi bi-file-earmark-pdf-fill text-danger file-icon"></i>
-                        {% else %}
-                            <i class="bi bi-file-earmark-fill file-icon"></i>
-                        {% endif %}
-                        <span>{{ folder }}/{{ file }}</span>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% else %}
-            <div class="mt-4 text-muted text-center">
-                No files uploaded yet.
-            </div>
-        {% endif %}
-    </div>
-</div>
-</body>
-</html>
-{% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Segregate Files</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        .card {
-            border-radius: 20px;
-            border: 1px solid #30CFD0;
-        }
-        .form-label {
-            font-weight: 500;
-        }
-        .upload-hint {
-            font-size: 0.9rem;
-            color: #6c757d;
-        }
-        .file-icon {
-            margin-right: 8px;
             font-size: 1.4rem;
             min-width: 24px;
             text-align: center;
@@ -166,20 +69,34 @@
             </div>
         </form>
 
-      {% for file in input_files %}
-  {% if file.ext == "csv" %}
-    <i class="bi bi-file-earmark-spreadsheet-fill text-success file-icon"></i>
-  {% elif file.ext == "json" %}
-    <i class="bi bi-braces text-warning file-icon"></i>
-  {% elif file.ext == "xml" %}
-    <i class="bi bi-code-slash text-info file-icon"></i>
-  {% elif file.ext == "pdf" %}
-    <i class="bi bi-file-earmark-pdf-fill text-danger file-icon"></i>
-  {% else %}
-    <i class="bi bi-file-earmark-fill file-icon"></i>
-  {% endif %}
-  <span>{{ file.folder }}/{{ file.filename }}</span>
-{% endfor %}
-
+        {% if input_files %}
+        <div class="mt-5">
+            <h5 class="text-secondary">📂 Uploaded Files ({{ input_files|length }})</h5>
+            <div class="uploaded-list mt-3">
+                {% for file in input_files %}
+                    <div class="uploaded-item">
+                        {% if file.ext == "csv" %}
+                            <i class="bi bi-file-earmark-spreadsheet-fill text-success file-icon"></i>
+                        {% elif file.ext == "json" %}
+                            <i class="bi bi-braces text-warning file-icon"></i>
+                        {% elif file.ext == "xml" %}
+                            <i class="bi bi-code-slash text-info file-icon"></i>
+                        {% elif file.ext == "pdf" %}
+                            <i class="bi bi-file-earmark-pdf-fill text-danger file-icon"></i>
+                        {% else %}
+                            <i class="bi bi-file-earmark-fill file-icon"></i>
+                        {% endif %}
+                        <span><strong>{{ file.folder }}/{{ file.subfolder }}</strong> — {{ file.filename }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+            <div class="mt-4 text-muted text-center">
+                No files uploaded yet.
+            </div>
+        {% endif %}
+    </div>
+</div>
 </body>
 </html>

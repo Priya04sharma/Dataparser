@@ -378,21 +378,25 @@ def segregate_view(request):
     input_files = []
 
     for folder in folders:
-        folder_path = f'{base_hdfs_path}/{folder}'
-        try:
-            files = hdfs_client.list(folder_path)
-            for f in files:
-                ext = f.split('.')[-1].lower()  # get file extension in lowercase
-                input_files.append({
-                    'folder': folder,
-                    'filename': f,
-                    'ext': ext,
-                })
-        except Exception as e:
-            # You can log the error here if needed
-            pass
+        for subfolder in ['', 'processed']:  # "" means base folder, 'processed' means subfolder
+            folder_path = f'{base_hdfs_path}/{folder}'
+            if subfolder:
+                folder_path += f'/{subfolder}'
 
-    # TODO: Handle POST upload logic here...
+            try:
+                files = hdfs_client.list(folder_path)
+                for f in files:
+                    ext = f.split('.')[-1].lower()
+                    input_files.append({
+                        'folder': folder,
+                        'subfolder': subfolder if subfolder else 'raw',
+                        'filename': f,
+                        'ext': ext,
+                        'path': f'{folder_path}/{f}',
+                    })
+            except Exception as e:
+                # Log if needed
+                pass
 
     return render(request, 'segregate.html', {
         'input_files': input_files,
