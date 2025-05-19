@@ -323,7 +323,8 @@ SEGREGATED_DIRS = {
 
 def run_file_segregation():
     subprocess.run(["spark-submit", "/opt/script/segregation_code.py"])
-
+import redis
+r = redis.Redis(host='localhost', port=6379, db=0)
 def segregate_files(request):
     message = error = None
     files_by_type = {}
@@ -333,10 +334,19 @@ def segregate_files(request):
         if form.is_valid():
             print("Form is validssssssssssssssssssssssssssssssssssssssssssssssssssss")
             files = request.FILES.getlist('files')
+            #ekdam upar likhna, qname different for csvs, xmls, etc
+
+            qname = 'xmlfiles'
+ 
+#har ek ke andar ye likhna
+ 
+#apna processing kiya, assume filename aya
+            
             try:
                 
                 for f in files:
                     print("Files to uploadssssssssssssssssssssssssseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee: ", f.name)
+                    r.lpush(qname,f.name)
                     upload_to_hdfs(f, f.name)
                 subprocess.run([
                 'spark-submit',
