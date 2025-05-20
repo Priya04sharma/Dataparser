@@ -462,16 +462,9 @@ def list_hdfs_files(request):
     for folder in folders:
         hdfs_path = f"{HDFS_UPLOAD_DIR}/{folder}"
         try:
-            # List files with status info (is directory or not)
-            file_statuses = client.list(hdfs_path, status=True)
-
-            # Keep only regular files (not directories like 'processed')
-            only_files = [
-                f["name"] for f in file_statuses if not f["type"] == "DIRECTORY"
-            ]
-
-            print(f"Files in {hdfs_path}:", only_files)  # Optional debug log
-            files_dict[folder] = only_files
+            files = client.list(hdfs_path)
+            print(f"Files in {hdfs_path}:", files)
+            files_dict[folder] = files
         except Exception as e:
             print(f"Error accessing {hdfs_path}: {e}")
             files_dict[folder] = []
