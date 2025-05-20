@@ -19,7 +19,7 @@ urlpatterns = [
     path('file-dropdown/', views.file_dropdown_page, name='file_dropdown_page'),
     path('list-hdfs-files/', views.list_hdfs_files, name='list_hdfs_files'),
     path('preview-file/', views.preview_hdfs_file, name='preview_hdfs_file'),
-
+    path('read-iceberg-table/', views.read_iceberg_table, name='read_iceberg_table'),
 
 ]
 
