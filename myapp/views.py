@@ -628,7 +628,7 @@ def get_spark():
     return spark
 
 from django.http import JsonResponse
-from .spark_utils import get_spark  # assuming this returns a SparkSession
+ # assuming this returns a SparkSession
 
 def read_iceberg_table(request):
     table_type = request.GET.get("table_type") or request.GET.get("type")
