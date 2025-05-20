@@ -387,6 +387,13 @@ def segregate_files(request):
                     '--deploy-mode', 'client',
                     '/dataplatform/myapp/jsonprocess.py',
                     ], check=True)
+                subprocess.run([
+                    'spark-submit',
+                    '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+                         '--master', 'spark://192.168.1.214:7077',
+                    '--deploy-mode', 'client',
+                    '/dataplatform/myapp/csvprocess.py',
+                    ], check=True)
                         # Optional loading screen
                 # return render(request, 'loading.html', {'redirect_url': '/segregate/trigger/'})
                 return render(request, 'redirect.html')
