@@ -530,41 +530,42 @@ import json
 import xml.etree.ElementTree as ET
 from PyPDF2 import PdfReader
 
+from django.http import JsonResponse
+import csv, json, io
+import xml.etree.ElementTree as ET
+from PyPDF2 import PdfReader
+
 def preview_hdfs_file(request):
     file_path = request.GET.get('file_path')
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 10))
+    start = (page - 1) * limit
+    end = start + limit
 
     if not file_path:
         return JsonResponse({'error': 'File path not provided'}, status=400)
 
-    # Normalize path to absolute and enforce /Files root
     if not file_path.startswith('/'):
         file_path = '/' + file_path
+
     if not file_path.startswith('/Files'):
         file_path = '/Files' + file_path if file_path != '/Files' else '/Files'
 
     try:
         ext = file_path.split('.')[-1].lower()
-
         with client.read(file_path) as f:
             file_bytes = f.read()
-
-        start = (page - 1) * limit
-        end = start + limit
 
         if ext == 'csv':
             decoded = file_bytes.decode('utf-8', errors='replace')
             reader = csv.reader(io.StringIO(decoded))
-            rows = list(reader)
-            total = len(rows)
-            paginated_rows = rows[start:end]
+            all_rows = list(reader)
+            paginated = all_rows[start:end]
             return JsonResponse({
                 'type': 'csv',
-                'rows': paginated_rows,
-                'total': total,
-                'page': page,
-                'limit': limit
+                'rows': paginated,
+                'total': len(all_rows),
+                'page': page
             })
 
         elif ext == 'json':
@@ -573,62 +574,40 @@ def preview_hdfs_file(request):
             if isinstance(parsed, list):
                 total = len(parsed)
                 paginated = parsed[start:end]
-                pretty = json.dumps(paginated, indent=2)
                 return JsonResponse({
                     'type': 'json',
-                    'content': pretty,
+                    'content': json.dumps(paginated, indent=2),
                     'total': total,
-                    'page': page,
-                    'limit': limit
+                    'page': page
                 })
             else:
-                # Not a list, treat as single object
-                pretty = json.dumps(parsed, indent=2)
-                return JsonResponse({'type': 'json', 'content': pretty})
+                return JsonResponse({'type': 'json', 'content': json.dumps(parsed, indent=2)})
 
         elif ext == 'xml':
             decoded = file_bytes.decode('utf-8', errors='replace')
             try:
                 root = ET.fromstring(decoded)
-                children = list(root)
-                total = len(children)
-                paginated_children = children[start:end]
-                paginated_xml = ''.join([ET.tostring(child, encoding='unicode') for child in paginated_children])
-                return JsonResponse({
-                    'type': 'xml',
-                    'content': paginated_xml,
-                    'total': total,
-                    'page': page,
-                    'limit': limit
-                })
+                xml_str = ET.tostring(root, encoding='unicode')
             except Exception:
-                return JsonResponse({'type': 'xml', 'content': decoded[start:end]})
+                xml_str = decoded
+            return JsonResponse({'type': 'xml', 'content': xml_str})
 
         elif ext == 'pdf':
             reader = PdfReader(io.BytesIO(file_bytes))
-            total = len(reader.pages)
-            paginated_pages = reader.pages[start:end]
             text = ""
-            for page_obj in paginated_pages:
+            for page_obj in reader.pages[start:end]:
                 text += page_obj.extract_text() or ''
-            return JsonResponse({
-                'type': 'pdf',
-                'content': text.strip(),
-                'total': total,
-                'page': page,
-                'limit': limit
-            })
+            return JsonResponse({'type': 'pdf', 'content': text.strip(), 'total': len(reader.pages), 'page': page})
 
         else:
             decoded = file_bytes.decode('utf-8', errors='replace')
-            total = len(decoded)
-            content = decoded[start:end]
+            lines = decoded.splitlines()
+            paginated = lines[start:end]
             return JsonResponse({
                 'type': 'text',
-                'content': content,
-                'total': total,
-                'page': page,
-                'limit': limit
+                'content': "\n".join(paginated),
+                'total': len(lines),
+                'page': page
             })
 
     except Exception as e:
