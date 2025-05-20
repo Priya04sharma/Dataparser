@@ -631,7 +631,7 @@ def get_spark():
         .appName("IcebergApp") \
         .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
         .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
-        .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs://192.168.1.214:9870/Files/iceberg/warehouse") \
+        .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs://Files/iceberg/warehouse") \
         .getOrCreate()
 
 # Your view with pagination
