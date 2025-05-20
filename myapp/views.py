@@ -625,6 +625,7 @@ def preview_hdfs_file(request):
 from django.http import JsonResponse
 from pyspark.sql import SparkSession
 
+# Define Spark session creation function inside views.py
 def get_spark():
     return SparkSession.builder \
         .appName("IcebergApp") \
@@ -633,16 +634,18 @@ def get_spark():
         .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs://192.168.1.214:9870/Files/iceberg/warehouse") \
         .getOrCreate()
 
-
-    
-
-from .spark_initializer import get_spark
-# Read iceberg table with pagination
+# Your view with pagination
 def read_iceberg_table(request):
     table_type = request.GET.get("table_type") or request.GET.get("type")
     db_name = request.GET.get("db", "db_name")
-    page = int(request.GET.get("page", 1))
-    page_size = int(request.GET.get("page_size", 10))
+    try:
+        page = int(request.GET.get("page", 1))
+        page_size = int(request.GET.get("page_size", 10))
+    except ValueError:
+        return JsonResponse({'error': 'Page and page_size must be integers'}, status=400)
+
+    if page < 1 or page_size < 1:
+        return JsonResponse({'error': 'Page and page_size must be positive integers'}, status=400)
 
     if not table_type:
         return JsonResponse({'error': 'Missing table_type in request'}, status=400)
@@ -650,13 +653,13 @@ def read_iceberg_table(request):
     try:
         spark = get_spark()
         table_name = f"{db_name}.{table_type}_table"
+
         df = spark.read.format("iceberg").load(f"hadoop_cat.{table_name}")
 
         total_count = df.count()
         start = (page - 1) * page_size
         end = start + page_size
 
-        # Add row index using zipWithIndex for pagination
         indexed_rdd = df.rdd.zipWithIndex().filter(
             lambda row_index: start <= row_index[1] < end
         ).map(lambda row_index: row_index[0])
