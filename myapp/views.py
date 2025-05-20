@@ -575,17 +575,30 @@ def preview_hdfs_file(request):
                 'page': page
             })
 
+        # elif ext == 'json':
+        #     decoded = file_bytes.decode('utf-8', errors='replace')
+        #     parsed = json.loads(decoded)
+        #     if isinstance(parsed, list):
+        #         total = len(parsed)
+        #         paginated = parsed[start:end]
+        #         return JsonResponse({
+        #             'type': 'json',
+        #             'content': json.dumps(paginated, indent=2),
+        #             'total': total,
+        #             'page': page
+        #         })
         elif ext == 'json':
             decoded = file_bytes.decode('utf-8', errors='replace')
-            parsed = json.loads(decoded)
+            lines = decoded.strip().split('\n')
+            parsed = [json.loads(line) for line in lines if line.strip()]  # Handle empty lines safely
             if isinstance(parsed, list):
                 total = len(parsed)
                 paginated = parsed[start:end]
                 return JsonResponse({
-                    'type': 'json',
-                    'content': json.dumps(paginated, indent=2),
-                    'total': total,
-                    'page': page
+                'type': 'json',
+                'content': json.dumps(paginated, indent=2),
+                'total': total,
+                'page': page
                 })
             else:
                 return JsonResponse({'type': 'json', 'content': json.dumps(parsed, indent=2)})
