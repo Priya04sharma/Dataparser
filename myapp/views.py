@@ -613,21 +613,20 @@ def preview_hdfs_file(request):
     except Exception as e:
         return JsonResponse({'error': f"Failed to read file '{file_path}': {str(e)}"}, status=500)
 
-# spark_session.py
+# spark_utils.py
 from pyspark.sql import SparkSession
 
 def get_spark():
-    spark = SparkSession.getActiveSession()
-    if spark is None:
-        spark = SparkSession.builder \
-            .appName("IcebergReader") \
-            .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
-            .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
-            .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
-            .getOrCreate()
-    return spark
+    return SparkSession.builder \
+        .appName("IcebergApp") \
+        .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
+        .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
+        .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs://namenode:9000/warehouse") \
+        .getOrCreate()
+
 
 from django.http import JsonResponse
+from .spark_utils import get_spark
  # assuming this returns a SparkSession
 
 def read_iceberg_table(request):
