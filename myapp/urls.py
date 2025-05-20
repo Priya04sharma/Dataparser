@@ -18,6 +18,8 @@ urlpatterns = [
 #new
     path('file-dropdown/', views.file_dropdown_page, name='file_dropdown_page'),
     path('list-hdfs-files/', views.list_hdfs_files, name='list_hdfs_files'),
+    path('preview-file/', views.preview_hdfs_file, name='preview_hdfs_file'),
+
 
 ]
 

@@ -452,6 +452,9 @@ def trigger_segregation(request):
 # def segregate_view(request):
 #     print("segregate_view called")
 #     return HttpResponse("Hello from segregate_view!")
+
+
+
 def file_dropdown_page(request):
     return render(request, 'file_dropdown.html')
 
@@ -470,3 +473,59 @@ def list_hdfs_files(request):
             files_dict[folder] = []
 
     return JsonResponse(files_dict)
+
+
+
+
+
+import io
+import json
+import csv
+import xml.etree.ElementTree as ET
+from PyPDF2 import PdfReader
+from django.http import JsonResponse
+from hdfs import InsecureClient
+def preview_hdfs_file(request):
+    file_path = request.GET.get('file_path')
+    if not file_path:
+        return JsonResponse({'error': 'File path not provided'}, status=400)
+
+    try:
+        ext = file_path.split('.')[-1].lower()
+
+        with client.read(file_path) as f:
+            file_bytes = f.read()
+
+        if ext == 'csv':
+            decoded = file_bytes.decode('utf-8')
+            reader = csv.reader(io.StringIO(decoded))
+            rows = list(reader)[:10]  # First 10 rows
+            return JsonResponse({'type': 'csv', 'rows': rows})
+
+        elif ext == 'json':
+            decoded = file_bytes.decode('utf-8')
+            parsed = json.loads(decoded)
+            pretty = json.dumps(parsed, indent=2)
+            return JsonResponse({'type': 'json', 'content': pretty})
+
+        elif ext == 'xml':
+            decoded = file_bytes.decode('utf-8')
+            try:
+                root = ET.fromstring(decoded)
+                xml_str = ET.tostring(root, encoding='unicode')
+            except:
+                xml_str = decoded  # fallback if malformed
+            return JsonResponse({'type': 'xml', 'content': xml_str})
+
+        elif ext == 'pdf':
+            reader = PdfReader(io.BytesIO(file_bytes))
+            text = ""
+            for page in reader.pages[:2]:  # first 2 pages
+                text += page.extract_text() or ''
+            return JsonResponse({'type': 'pdf', 'content': text.strip()})
+
+        else:
+            return JsonResponse({'type': 'text', 'content': file_bytes.decode('utf-8')[:1000]})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
