@@ -375,7 +375,8 @@
         icebergDiv.innerHTML = "Loading Iceberg table preview...";
 
         try {
-            const icebergResp = await fetch(`/read-iceberg-table/?type=${folder}`);
+            // Use 'table_type' param to match backend expectations
+            const icebergResp = await fetch(`/read-iceberg-table/?table_type=${folder}`);
             const icebergData = await icebergResp.json();
 
             if (icebergData.error) {

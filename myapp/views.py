@@ -591,7 +591,8 @@ from .spark_session import spark  # import the reusable Spark session
 
 
 def read_iceberg_table(request):
-    table_type = request.GET.get("table_type")  # csv, json, pdf, xml
+    # Accept either 'table_type' or 'type' from request GET params
+    table_type = request.GET.get("table_type") or request.GET.get("type")
     db_name = request.GET.get("db", "db_name")  # Default DB name if not provided
 
     if not table_type:
