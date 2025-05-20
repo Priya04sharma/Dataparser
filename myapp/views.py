@@ -613,9 +613,12 @@ def preview_hdfs_file(request):
     except Exception as e:
         return JsonResponse({'error': f"Failed to read file '{file_path}': {str(e)}"}, status=500)
 
-# spark_utils.py
+# views.py or your combined Django view file
+
+from django.http import JsonResponse
 from pyspark.sql import SparkSession
 
+# Spark session initializer
 def get_spark():
     return SparkSession.builder \
         .appName("IcebergApp") \
@@ -624,11 +627,7 @@ def get_spark():
         .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs://namenode:9000/warehouse") \
         .getOrCreate()
 
-
-from django.http import JsonResponse
-from .spark_utils import get_spark
- # assuming this returns a SparkSession
-
+# Read iceberg table with pagination
 def read_iceberg_table(request):
     table_type = request.GET.get("table_type") or request.GET.get("type")
     db_name = request.GET.get("db", "db_name")
@@ -647,7 +646,7 @@ def read_iceberg_table(request):
         start = (page - 1) * page_size
         end = start + page_size
 
-        # Add row numbers using zipWithIndex
+        # Add row index using zipWithIndex for pagination
         indexed_rdd = df.rdd.zipWithIndex().filter(
             lambda row_index: start <= row_index[1] < end
         ).map(lambda row_index: row_index[0])
@@ -663,5 +662,6 @@ def read_iceberg_table(request):
             'total_rows': total_count,
             'total_pages': (total_count + page_size - 1) // page_size,
         })
+
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
