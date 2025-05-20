@@ -591,3 +591,32 @@ def preview_hdfs_file(request):
 
     except Exception as e:
         return JsonResponse({'error': f"Failed to read file '{file_path}': {str(e)}"}, status=500)
+# views.py
+
+from django.http import JsonResponse
+from pyspark.sql import SparkSession
+
+# Create a Spark session with Iceberg catalog configured
+spark = SparkSession.builder \
+    .appName("IcebergApp") \
+    .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
+    .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
+    .config("spark.sql.catalog.hadoop_cat.warehouse", "/Files/iceberg/warehouse") \
+    .getOrCreate()
+
+def read_iceberg_table(request):
+    # Accept either 'table_type' or 'type' from request GET params
+    table_type = request.GET.get("table_type") or request.GET.get("type")
+    db_name = request.GET.get("db", "db_name")  # Default DB name if not provided
+
+    if not table_type:
+        return JsonResponse({'error': 'Missing table_type in request'}, status=400)
+
+    try:
+        table_name = f"{db_name}.{table_type}_table"
+        # Note: The catalog is called 'hadoop_cat' here based on config
+        df = spark.read.format("iceberg").load(f"hadoop_cat.{table_name}")
+        rows = df.limit(10).toPandas().to_dict(orient='records')
+        return JsonResponse({'table': table_name, 'rows': rows})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
