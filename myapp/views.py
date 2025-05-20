@@ -586,28 +586,31 @@ def preview_hdfs_file(request):
         return JsonResponse({'error': f"Failed to read file '{file_path}': {str(e)}"}, status=500)
 # views.py
 
-from django.http import JsonResponse
+# spark_session.py
 from pyspark.sql import SparkSession
 
-
-spark = SparkSession.builder \
-    .appName("IcebergReader") \
-    .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
-    .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
-    .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
-    .getOrCreate()
-
-
+def get_spark():
+    spark = SparkSession.getActiveSession()
+    if spark is None:
+        spark = SparkSession.builder \
+            .appName("IcebergReader") \
+            .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
+            .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
+            .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
+            .getOrCreate()
+    return spark
+from django.http import JsonResponse
+from .spark_session import get_spark  # import reusable session getter
 
 def read_iceberg_table(request):
-    # Accept either 'table_type' or 'type' from request GET params
     table_type = request.GET.get("table_type") or request.GET.get("type")
-    db_name = request.GET.get("db", "db_name")  # Default DB name if not provided
+    db_name = request.GET.get("db", "db_name")
 
     if not table_type:
         return JsonResponse({'error': 'Missing table_type in request'}, status=400)
 
     try:
+        spark = get_spark()
         table_name = f"{db_name}.{table_type}_table"
         df = spark.read.format("iceberg").load(f"hadoop_cat.{table_name}")
         rows = df.limit(10).toPandas().to_dict(orient='records')
