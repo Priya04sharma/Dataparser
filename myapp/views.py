@@ -626,20 +626,17 @@ from django.http import JsonResponse
 from pyspark.sql import SparkSession
 
 def get_spark():
-    spark = SparkSession.builder \
+    return SparkSession.builder \
         .appName("IcebergApp") \
         .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
         .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
         .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs://192.168.1.214:9870/Files/iceberg/warehouse") \
         .getOrCreate()
 
-    # Ensure this session is registered globally
-    SparkSession.setActiveSession(spark)
-    SparkSession.setDefaultSession(spark)
 
-    return spark
+    
 
-
+from .spark_initializer import get_spark
 # Read iceberg table with pagination
 def read_iceberg_table(request):
     table_type = request.GET.get("table_type") or request.GET.get("type")
