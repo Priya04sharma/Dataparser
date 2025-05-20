@@ -79,7 +79,7 @@
 
     <div id="filePreview">File preview will appear here...</div>
 </div>
-
+<!-- 
 <script>
     let hdfsData = {};
 
@@ -182,6 +182,123 @@
 
     // Initial load
     fetchFiles();
+</script> -->
+
+
+<script>
+    let hdfsData = {};
+
+    async function fetchFiles() {
+        try {
+            const response = await fetch('/list-hdfs-files/');
+            hdfsData = await response.json();
+            updateFiles(); // Populate files initially
+        } catch (error) {
+            console.error("Failed to fetch HDFS file list:", error);
+        }
+    }
+
+    function updateFiles() {
+        const folder = document.getElementById("folder-select").value;
+        const fileSelect = document.getElementById("file-select");
+
+        fileSelect.innerHTML = "";
+
+        if (hdfsData[folder] && hdfsData[folder].length > 0) {
+            hdfsData[folder].forEach(file => {
+                const option = document.createElement("option");
+                option.value = file;
+                option.text = file.split('/').pop();  // Show filename only
+                fileSelect.appendChild(option);
+            });
+        } else {
+            const option = document.createElement("option");
+            option.text = "No files found";
+            fileSelect.appendChild(option);
+        }
+
+        // Clear preview when changing folder
+        document.getElementById("filePreview").innerHTML = "File preview will appear here...";
+    }
+
+    async function previewFile() {
+        const fileSelect = document.getElementById("file-select");
+        const filePath = fileSelect.value;
+        const previewDiv = document.getElementById("filePreview");
+
+        if (!filePath) {
+            previewDiv.innerHTML = "Please select a file to preview.";
+            return;
+        }
+
+        previewDiv.innerHTML = "Loading preview...";
+
+        try {
+            const response = await fetch(`/preview-file/?file_path=${encodeURIComponent(filePath)}`);
+            const data = await response.json();
+
+            if (data.error) {
+                previewDiv.innerHTML = `<span style="color: red;">Error: ${data.error}</span>`;
+                return;
+            }
+
+            if (data.type === 'csv') {
+                // Render CSV as table
+                let html = '<table border="1" cellpadding="5" cellspacing="0"><thead><tr>';
+                if (data.rows.length > 0) {
+                    data.rows[0].forEach(header => {
+                        html += `<th>${escapeHtml(header)}</th>`;
+                    });
+                    html += '</tr></thead><tbody>';
+
+                    data.rows.slice(1).forEach(row => {
+                        html += '<tr>';
+                        row.forEach(cell => {
+                            html += `<td>${escapeHtml(cell)}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table>';
+                } else {
+                    html = "CSV file is empty.";
+                }
+                previewDiv.innerHTML = html;
+
+            } else if (['json', 'xml', 'pdf', 'text'].includes(data.type)) {
+                // Just show as preformatted text
+                previewDiv.innerHTML = `<pre>${escapeHtml(data.content)}</pre>`;
+            } else {
+                previewDiv.innerHTML = "No preview available for this file type.";
+            }
+        } catch (error) {
+            previewDiv.innerHTML = `<span style="color: red;">Error loading preview: ${error.message}</span>`;
+        }
+    }
+
+    // Helper to safely escape HTML characters
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Initial load
+    fetchFiles();
+
+    // Event listeners
+    document.getElementById("folder-select").addEventListener("change", () => {
+        updateFiles();
+        // Clear preview on folder change
+        document.getElementById("filePreview").innerHTML = "File preview will appear here...";
+    });
+
+    document.getElementById("file-select").addEventListener("change", () => {
+        previewFile();
+    });
 </script>
+
 </body>
 </html>
