@@ -458,6 +458,23 @@ def trigger_segregation(request):
 def file_dropdown_page(request):
     return render(request, 'file_dropdown.html')
 
+# def list_hdfs_files(request):
+#     folders = ['csv', 'json', 'pdf', 'xml']
+#     files_dict = {}
+
+#     for folder in folders:
+#         hdfs_path = f"{HDFS_UPLOAD_DIR}/{folder}"
+#         try:
+#             files = client.list(hdfs_path)
+#             print(f"Files in {hdfs_path}:", files)
+#             files_dict[folder] = files
+#         except Exception as e:
+#             print(f"Error accessing {hdfs_path}: {e}")
+#             files_dict[folder] = []
+
+#     return JsonResponse(files_dict)
+
+
 def list_hdfs_files(request):
     folders = ['csv', 'json', 'pdf', 'xml']
     files_dict = {}
@@ -466,15 +483,13 @@ def list_hdfs_files(request):
         hdfs_path = f"{HDFS_UPLOAD_DIR}/{folder}"
         try:
             files = client.list(hdfs_path)
-            print(f"Files in {hdfs_path}:", files)
-            files_dict[folder] = files
+            full_paths = [f"{hdfs_path}/{file}" for file in files]  # full HDFS paths
+            files_dict[folder] = full_paths
         except Exception as e:
             print(f"Error accessing {hdfs_path}: {e}")
             files_dict[folder] = []
 
     return JsonResponse(files_dict)
-
-
 
 
 
