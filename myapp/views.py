@@ -618,14 +618,20 @@ def preview_hdfs_file(request):
 from django.http import JsonResponse
 from pyspark.sql import SparkSession
 
-# Spark session initializer
 def get_spark():
-    return SparkSession.builder \
+    spark = SparkSession.builder \
         .appName("IcebergApp") \
         .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
         .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
-        .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs://namenode:9000/warehouse") \
+        .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs://192.168.1.214:9870/Files/iceberg/warehouse") \
         .getOrCreate()
+
+    # Ensure this session is registered globally
+    SparkSession.setActiveSession(spark)
+    SparkSession.setDefaultSession(spark)
+
+    return spark
+
 
 # Read iceberg table with pagination
 def read_iceberg_table(request):
