@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -79,112 +79,6 @@
 
     <div id="filePreview">File preview will appear here...</div>
 </div>
-<!-- 
-<script>
-    let hdfsData = {};
-
-    async function fetchFiles() {
-        try {
-            const response = await fetch('/list-hdfs-files/');
-            hdfsData = await response.json();
-            updateFiles(); // Populate files initially
-        } catch (error) {
-            console.error("Failed to fetch HDFS file list:", error);
-        }
-    }
-
-    function updateFiles() {
-        const folder = document.getElementById("folder-select").value;
-        const fileSelect = document.getElementById("file-select");
-
-        fileSelect.innerHTML = "";
-
-        if (hdfsData[folder] && hdfsData[folder].length > 0) {
-            hdfsData[folder].forEach(file => {
-                const option = document.createElement("option");
-                option.value = file;
-                option.text = file.split('/').pop();  // Show filename only
-                fileSelect.appendChild(option);
-            });
-        } else {
-            const option = document.createElement("option");
-            option.text = "No files found";
-            fileSelect.appendChild(option);
-        }
-
-        // Clear preview when changing folder
-        document.getElementById("filePreview").innerHTML = "File preview will appear here...";
-    }
-
-    async function previewFile() {
-        const fileSelect = document.getElementById("file-select");
-        const filePath = fileSelect.value;
-        const previewDiv = document.getElementById("filePreview");
-
-        if (!filePath) {
-            previewDiv.innerHTML = "Please select a file to preview.";
-            return;
-        }
-
-        previewDiv.innerHTML = "Loading preview...";
-
-        try {
-            const response = await fetch(`/preview-file/?file_path=${encodeURIComponent(filePath)}`);
-            const data = await response.json();
-
-            if (data.error) {
-                previewDiv.innerHTML = `<span style="color: red;">Error: ${data.error}</span>`;
-                return;
-            }
-
-            if (data.type === 'csv') {
-                // Render CSV as table
-                let html = '<table><thead><tr>';
-                if (data.rows.length > 0) {
-                    data.rows[0].forEach(header => {
-                        html += `<th>${header}</th>`;
-                    });
-                    html += '</tr></thead><tbody>';
-
-                    data.rows.slice(1).forEach(row => {
-                        html += '<tr>';
-                        row.forEach(cell => {
-                            html += `<td>${cell}</td>`;
-                        });
-                        html += '</tr>';
-                    });
-                    html += '</tbody></table>';
-                } else {
-                    html = "CSV file is empty.";
-                }
-                previewDiv.innerHTML = html;
-
-            } else if (['json', 'xml', 'pdf', 'text'].includes(data.type)) {
-                // Just show as preformatted text
-                previewDiv.innerHTML = `<pre>${escapeHtml(data.content)}</pre>`;
-            } else {
-                previewDiv.innerHTML = "No preview available for this file type.";
-            }
-        } catch (error) {
-            previewDiv.innerHTML = `<span style="color: red;">Error loading preview: ${error.message}</span>`;
-        }
-    }
-
-    // Helper to safely escape HTML characters
-    function escapeHtml(text) {
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    // Initial load
-    fetchFiles();
-</script> -->
-
-
 <script>
     let hdfsData = {};
 
@@ -293,6 +187,244 @@
         updateFiles();
         // Clear preview on folder change
         document.getElementById("filePreview").innerHTML = "File preview will appear here...";
+    });
+
+    document.getElementById("file-select").addEventListener("change", () => {
+        previewFile();
+    });
+</script>
+
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HDFS File Dropdown</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 20px;
+        }
+
+        select {
+            width: 300px;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            border: 1px solid #ddd;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #0c6e7d;
+        }
+
+        #filePreview, #icebergPreview {
+            margin-top: 25px;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 15px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        table, th, td {
+            border: 1px solid #aaa;
+            padding: 6px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Select HDFS File</h2>
+
+    <label for="folder-select">Choose Folder:</label>
+    <select id="folder-select" onchange="updateFiles()">
+        <option value="csv">CSV</option>
+        <option value="json">JSON</option>
+        <option value="pdf">PDF</option>
+        <option value="xml">XML</option>
+    </select>
+
+    <label for="file-select">Choose File:</label>
+    <select id="file-select" onchange="previewFile()">
+        <option>Select a folder first</option>
+    </select>
+
+    <div id="filePreview">File preview will appear here...</div>
+    <div id="icebergPreview">Iceberg table will appear here...</div>
+</div>
+
+<script>
+    let hdfsData = {};
+
+    async function fetchFiles() {
+        try {
+            const response = await fetch('/list-hdfs-files/');
+            hdfsData = await response.json();
+            updateFiles(); // Populate files initially
+        } catch (error) {
+            console.error("Failed to fetch HDFS file list:", error);
+        }
+    }
+
+    function updateFiles() {
+        const folder = document.getElementById("folder-select").value;
+        const fileSelect = document.getElementById("file-select");
+
+        fileSelect.innerHTML = "";
+
+        if (hdfsData[folder] && hdfsData[folder].length > 0) {
+            hdfsData[folder].forEach(file => {
+                const option = document.createElement("option");
+                option.value = file;
+                option.text = file.split('/').pop();  // Show filename only
+                fileSelect.appendChild(option);
+            });
+        } else {
+            const option = document.createElement("option");
+            option.text = "No files found";
+            fileSelect.appendChild(option);
+        }
+
+        // Clear previews on folder change
+        document.getElementById("filePreview").innerHTML = "File preview will appear here...";
+        document.getElementById("icebergPreview").innerHTML = "Iceberg table will appear here...";
+    }
+
+    async function previewFile() {
+        const fileSelect = document.getElementById("file-select");
+        const filePath = fileSelect.value;
+        const previewDiv = document.getElementById("filePreview");
+
+        if (!filePath) {
+            previewDiv.innerHTML = "Please select a file to preview.";
+            return;
+        }
+
+        previewDiv.innerHTML = "Loading preview...";
+
+        try {
+            const response = await fetch(`/preview-file/?file_path=${encodeURIComponent(filePath)}`);
+            const data = await response.json();
+
+            if (data.error) {
+                previewDiv.innerHTML = `<span style="color: red;">Error: ${data.error}</span>`;
+                return;
+            }
+
+            if (data.type === 'csv') {
+                let html = '<table border="1" cellpadding="5" cellspacing="0"><thead><tr>';
+                if (data.rows.length > 0) {
+                    data.rows[0].forEach(header => {
+                        html += `<th>${escapeHtml(header)}</th>`;
+                    });
+                    html += '</tr></thead><tbody>';
+
+                    data.rows.slice(1).forEach(row => {
+                        html += '<tr>';
+                        row.forEach(cell => {
+                            html += `<td>${escapeHtml(cell)}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table>';
+                } else {
+                    html = "CSV file is empty.";
+                }
+                previewDiv.innerHTML = html;
+
+            } else if (['json', 'xml', 'pdf', 'text'].includes(data.type)) {
+                previewDiv.innerHTML = `<pre>${escapeHtml(data.content)}</pre>`;
+            } else {
+                previewDiv.innerHTML = "No preview available for this file type.";
+            }
+        } catch (error) {
+            previewDiv.innerHTML = `<span style="color: red;">Error loading preview: ${error.message}</span>`;
+        }
+
+        // Fetch Iceberg Table Preview
+        const folder = document.getElementById("folder-select").value;
+        const icebergDiv = document.getElementById("icebergPreview");
+        icebergDiv.innerHTML = "Loading Iceberg table preview...";
+
+        try {
+            const icebergResp = await fetch(`/read-iceberg-table/?type=${folder}`);
+            const icebergData = await icebergResp.json();
+
+            if (icebergData.error) {
+                icebergDiv.innerHTML = `<span style="color: red;">Error: ${icebergData.error}</span>`;
+            } else {
+                const rows = icebergData.rows;
+                if (rows.length > 0) {
+                    const headers = Object.keys(rows[0]);
+                    let html = "<h4>Iceberg Table Preview:</h4><table><thead><tr>";
+                    headers.forEach(header => {
+                        html += `<th>${escapeHtml(header)}</th>`;
+                    });
+                    html += "</tr></thead><tbody>";
+
+                    rows.forEach(row => {
+                        html += "<tr>";
+                        headers.forEach(header => {
+                            html += `<td>${escapeHtml(String(row[header]))}</td>`;
+                        });
+                        html += "</tr>";
+                    });
+
+                    html += "</tbody></table>";
+                    icebergDiv.innerHTML = html;
+                } else {
+                    icebergDiv.innerHTML = "No rows found in Iceberg table.";
+                }
+            }
+        } catch (error) {
+            icebergDiv.innerHTML = `<span style="color: red;">Error fetching Iceberg table: ${error.message}</span>`;
+        }
+    }
+
+    // Helper to safely escape HTML characters
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Initial load
+    fetchFiles();
+
+    // Event listeners
+    document.getElementById("folder-select").addEventListener("change", () => {
+        updateFiles();
     });
 
     document.getElementById("file-select").addEventListener("change", () => {

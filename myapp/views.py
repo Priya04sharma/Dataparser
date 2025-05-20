@@ -561,3 +561,23 @@ def preview_hdfs_file(request):
 
     except Exception as e:
         return JsonResponse({'error': f"Failed to read file '{file_path}': {str(e)}"}, status=500)
+# views.py
+
+from django.http import JsonResponse
+from .spark_session import spark  # import the reusable Spark session
+
+
+def read_iceberg_table(request):
+    table_type = request.GET.get("table_type")  # csv, json, pdf, xml
+    db_name = request.GET.get("db", "db_name")  # Default DB name if not provided
+
+    if not table_type:
+        return JsonResponse({'error': 'Missing table_type in request'}, status=400)
+
+    try:
+        table_name = f"{db_name}.{table_type}_table"
+        df = spark.read.format("iceberg").load(f"hadoop_cat.{table_name}")
+        rows = df.limit(10).toPandas().to_dict(orient='records')
+        return JsonResponse({'table': table_name, 'rows': rows})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
