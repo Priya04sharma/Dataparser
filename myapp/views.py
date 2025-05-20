@@ -523,31 +523,24 @@ def list_hdfs_files(request):
 
 
 
-import io
-import json
-import csv
-import xml.etree.ElementTree as ET
-from PyPDF2 import PdfReader
 from django.http import JsonResponse
-from hdfs import InsecureClient
 import csv
 import io
 import json
 import xml.etree.ElementTree as ET
 from PyPDF2 import PdfReader
-from django.http import JsonResponse
 
 def preview_hdfs_file(request):
     file_path = request.GET.get('file_path')
+    page = int(request.GET.get('page', 1))
+    limit = int(request.GET.get('limit', 10))
 
     if not file_path:
         return JsonResponse({'error': 'File path not provided'}, status=400)
 
-    # Normalize path to absolute
+    # Normalize path to absolute and enforce /Files root
     if not file_path.startswith('/'):
         file_path = '/' + file_path
-
-    # Optional: enforce path to be under /Files if your setup requires it
     if not file_path.startswith('/Files'):
         file_path = '/Files' + file_path if file_path != '/Files' else '/Files'
 
@@ -557,41 +550,89 @@ def preview_hdfs_file(request):
         with client.read(file_path) as f:
             file_bytes = f.read()
 
+        start = (page - 1) * limit
+        end = start + limit
+
         if ext == 'csv':
             decoded = file_bytes.decode('utf-8', errors='replace')
             reader = csv.reader(io.StringIO(decoded))
-            rows = list(reader)[:10]  # First 10 rows
-            return JsonResponse({'type': 'csv', 'rows': rows})
+            rows = list(reader)
+            total = len(rows)
+            paginated_rows = rows[start:end]
+            return JsonResponse({
+                'type': 'csv',
+                'rows': paginated_rows,
+                'total': total,
+                'page': page,
+                'limit': limit
+            })
 
         elif ext == 'json':
             decoded = file_bytes.decode('utf-8', errors='replace')
             parsed = json.loads(decoded)
-            pretty = json.dumps(parsed, indent=2)
-            return JsonResponse({'type': 'json', 'content': pretty})
+            if isinstance(parsed, list):
+                total = len(parsed)
+                paginated = parsed[start:end]
+                pretty = json.dumps(paginated, indent=2)
+                return JsonResponse({
+                    'type': 'json',
+                    'content': pretty,
+                    'total': total,
+                    'page': page,
+                    'limit': limit
+                })
+            else:
+                # Not a list, treat as single object
+                pretty = json.dumps(parsed, indent=2)
+                return JsonResponse({'type': 'json', 'content': pretty})
 
         elif ext == 'xml':
             decoded = file_bytes.decode('utf-8', errors='replace')
             try:
                 root = ET.fromstring(decoded)
-                xml_str = ET.tostring(root, encoding='unicode')
+                children = list(root)
+                total = len(children)
+                paginated_children = children[start:end]
+                paginated_xml = ''.join([ET.tostring(child, encoding='unicode') for child in paginated_children])
+                return JsonResponse({
+                    'type': 'xml',
+                    'content': paginated_xml,
+                    'total': total,
+                    'page': page,
+                    'limit': limit
+                })
             except Exception:
-                xml_str = decoded  # fallback if malformed
-            return JsonResponse({'type': 'xml', 'content': xml_str})
+                return JsonResponse({'type': 'xml', 'content': decoded[start:end]})
 
         elif ext == 'pdf':
             reader = PdfReader(io.BytesIO(file_bytes))
+            total = len(reader.pages)
+            paginated_pages = reader.pages[start:end]
             text = ""
-            for page in reader.pages[:2]:  # first 2 pages
-                text += page.extract_text() or ''
-            return JsonResponse({'type': 'pdf', 'content': text.strip()})
+            for page_obj in paginated_pages:
+                text += page_obj.extract_text() or ''
+            return JsonResponse({
+                'type': 'pdf',
+                'content': text.strip(),
+                'total': total,
+                'page': page,
+                'limit': limit
+            })
 
         else:
             decoded = file_bytes.decode('utf-8', errors='replace')
-            return JsonResponse({'type': 'text', 'content': decoded[:1000]})
+            total = len(decoded)
+            content = decoded[start:end]
+            return JsonResponse({
+                'type': 'text',
+                'content': content,
+                'total': total,
+                'page': page,
+                'limit': limit
+            })
 
     except Exception as e:
         return JsonResponse({'error': f"Failed to read file '{file_path}': {str(e)}"}, status=500)
-# views.py
 
 # spark_session.py
 from pyspark.sql import SparkSession
@@ -606,8 +647,6 @@ def get_spark():
             .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
             .getOrCreate()
     return spark
-from django.http import JsonResponse
-# from .spark_session import get_spark  # import reusable session getter
 
 def read_iceberg_table(request):
     table_type = request.GET.get("table_type") or request.GET.get("type")

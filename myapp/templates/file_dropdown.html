@@ -276,7 +276,12 @@
     <select id="file-select" onchange="previewFile()">
         <option>Select a folder first</option>
     </select>
-
+ <!-- Pagination Controls -->
+<div id="pagination-controls" style="margin-top: 15px;">
+    <button onclick="changePage(-1)">Previous</button>
+    <span id="page-info" style="margin: 0 10px;">Page 1</span>
+    <button onclick="changePage(1)">Next</button>
+</div>
     <div id="filePreview">File preview will appear here...</div>
     <div id="icebergPreview">Iceberg table will appear here...</div>
 </div>
@@ -368,6 +373,69 @@
         } catch (error) {
             previewDiv.innerHTML = `<span style="color: red;">Error loading preview: ${error.message}</span>`;
         }
+let currentPage = 1;
+const limit = 10;
+let totalRows = 0;
+let currentFilePath = '';
+
+function changePage(delta) {
+    const newPage = currentPage + delta;
+    if (newPage < 1 || newPage > Math.ceil(totalRows / limit)) return;
+    currentPage = newPage;
+    previewFile();  // refresh with new page
+}
+
+function updatePaginationInfo() {
+    const pageInfo = document.getElementById('page-info');
+    const totalPages = Math.ceil(totalRows / limit);
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+}
+
+function previewFile() {
+    const fileSelect = document.getElementById("file-select");
+    const file = fileSelect.value;
+    if (!file) return;
+
+    currentFilePath = file;
+    fetch(`/preview_file?file_path=${file}&page=${currentPage}&limit=${limit}`)
+        .then(response => response.json())
+        .then(data => {
+            const previewDiv = document.getElementById("filePreview");
+            const icebergDiv = document.getElementById("icebergPreview");
+            if (data.error) {
+                previewDiv.innerText = data.error;
+                return;
+            }
+
+            totalRows = data.total || 0;
+            updatePaginationInfo();
+
+            if (data.type === 'csv') {
+                previewDiv.innerHTML = generateTable(data.rows);
+            } else if (data.type === 'json' || data.type === 'xml' || data.type === 'pdf' || data.type === 'text') {
+                previewDiv.innerText = data.content;
+            } else {
+                previewDiv.innerText = "Unsupported file type.";
+            }
+
+            icebergDiv.innerText = ''; // Clear or refresh iceberg preview if needed
+        })
+        .catch(err => {
+            document.getElementById("filePreview").innerText = "Error loading file: " + err;
+        });
+}
+
+function generateTable(rows) {
+    if (!rows.length) return "No data available.";
+    let table = "<table><thead><tr>";
+    rows[0].forEach((_, i) => table += `<th>Col ${i + 1}</th>`);
+    table += "</tr></thead><tbody>";
+    rows.forEach(row => {
+        table += "<tr>" + row.map(col => `<td>${col}</td>`).join("") + "</tr>";
+    });
+    table += "</tbody></table>";
+    return table;
+}
 
         // Fetch Iceberg Table Preview
         const folder = document.getElementById("folder-select").value;
