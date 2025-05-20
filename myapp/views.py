@@ -420,34 +420,50 @@ def trigger_segregation(request):
 #         'input_files': input_files,
 #     })
 
-from hdfs import InsecureClient
+# from hdfs import InsecureClient
 
-def get_hdfs_files():
-    client = InsecureClient('http://192.168.1.214:9870', user='hdfs')  # adjust hostname and port
-    base_dirs = [
-        '/Files/csv/', '/Files/json/', '/Files/pdf/', '/Files/xml/',
-        '/Files/csv/processed/', '/Files/json/processed/', '/Files/pdf/processed/', '/Files/xml/processed/'
-    ]
+# def get_hdfs_files():
+#     client = InsecureClient('http://192.168.1.214:9870', user='hdfs')  # adjust hostname and port
+#     base_dirs = [
+#         '/Files/csv/', '/Files/json/', '/Files/pdf/', '/Files/xml/',
+#         '/Files/csv/processed/', '/Files/json/processed/', '/Files/pdf/processed/', '/Files/xml/processed/'
+#     ]
 
-    files = []
-    for path in base_dirs:
+#     files = []
+#     for path in base_dirs:
+#         try:
+#             file_list = client.list(path)
+#             for file in file_list:
+#                 if not file.startswith('_') and not file.startswith('.'):
+#                     files.append({
+#                         'folder': path.split('/')[2],  # csv, json, pdf, xml
+#                         'subfolder': 'processed' if 'processed' in path else 'raw',
+#                         'filename': file,
+#                         'ext': file.split('.')[-1],
+#                         'path': path + file
+#                     })
+#         except Exception as e:
+#             print(f"Error reading {path}: {e}")
+#             continue
+#     return files
+
+
+# def segregate_view(request):
+#     print("segregate_view called")
+#     return HttpResponse("Hello from segregate_view!")
+def file_dropdown_page(request):
+    return render(request, 'file_dropdown.html')
+
+def list_hdfs_files(request):
+    folders = ['csv', 'json', 'pdf', 'xml']
+    files_dict = {}
+
+    for folder in folders:
+        hdfs_path = f"/Files/{folder}"
         try:
-            file_list = client.list(path)
-            for file in file_list:
-                if not file.startswith('_') and not file.startswith('.'):
-                    files.append({
-                        'folder': path.split('/')[2],  # csv, json, pdf, xml
-                        'subfolder': 'processed' if 'processed' in path else 'raw',
-                        'filename': file,
-                        'ext': file.split('.')[-1],
-                        'path': path + file
-                    })
+            files = client.list(hdfs_path)
+            files_dict[folder] = files
         except Exception as e:
-            print(f"Error reading {path}: {e}")
-            continue
-    return files
+            files_dict[folder] = [f"Error: {str(e)}"]
 
-
-def segregate_view(request):
-    print("segregate_view called")
-    return HttpResponse("Hello from segregate_view!")
+    return JsonResponse(files_dict)

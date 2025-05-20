@@ -15,6 +15,10 @@ urlpatterns = [
     # path('iceberg/download/', views.download_iceberg_csv, name='download_iceberg_csv'),
     path('segregate/', views.segregate_files, name='segregate_files'),
     path('segregate/trigger/', views.trigger_segregation, name='trigger_segregation'),
+#new
+    path('file-dropdown/', views.file_dropdown_page, name='file_dropdown_page'),
+    path('list-hdfs-files/', views.list_hdfs_files, name='list_hdfs_files'),
+
 ]
 
 
