@@ -197,12 +197,11 @@
 </body>
 </html> -->
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HDFS File Dropdown</title>
+    <title>HDFS File Dropdown with Dual Pagination</title>
 
     <style>
         body {
@@ -223,7 +222,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: auto;
             border: 1px solid #ddd;
             padding: 30px;
@@ -258,6 +257,24 @@
             padding: 6px;
             text-align: left;
         }
+
+        .pagination-controls {
+            margin-top: 10px;
+        }
+
+        button {
+            margin-right: 10px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .page-info {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -265,7 +282,7 @@
     <h2>Select HDFS File</h2>
 
     <label for="folder-select">Choose Folder:</label>
-    <select id="folder-select" onchange="updateFiles()">
+    <select id="folder-select" onchange="onFolderChange()">
         <option value="csv">CSV</option>
         <option value="json">JSON</option>
         <option value="pdf">PDF</option>
@@ -273,27 +290,54 @@
     </select>
 
     <label for="file-select">Choose File:</label>
-    <select id="file-select" onchange="previewFile()">
+    <select id="file-select" onchange="onFileChange()">
         <option>Select a folder first</option>
     </select>
 
+    <!-- File Preview Pagination Controls -->
+    <div class="pagination-controls">
+        <button id="file-prev-btn" onclick="changeFilePage(-1)" disabled>Previous</button>
+        <button id="file-next-btn" onclick="changeFilePage(1)" disabled>Next</button>
+        <span id="file-page-info" class="page-info">Page 0 of 0</span>
+    </div>
+
     <div id="filePreview">File preview will appear here...</div>
+
+    <!-- Iceberg Table Preview Pagination Controls -->
+    <div class="pagination-controls">
+        <button id="iceberg-prev-btn" onclick="changeIcebergPage(-1)" disabled>Previous</button>
+        <button id="iceberg-next-btn" onclick="changeIcebergPage(1)" disabled>Next</button>
+        <span id="iceberg-page-info" class="page-info">Page 0 of 0</span>
+    </div>
+
     <div id="icebergPreview">Iceberg table will appear here...</div>
 </div>
 
 <script>
     let hdfsData = {};
 
+    // File preview pagination state
+    let fileCurrentPage = 1;
+    const fileLimit = 10;  // rows per page
+    let fileTotalRows = 0;
+
+    // Iceberg table pagination state
+    let icebergCurrentPage = 1;
+    const icebergLimit = 10;
+    let icebergTotalRows = 0;
+
+    // Fetch initial list of files
     async function fetchFiles() {
         try {
             const response = await fetch('/list-hdfs-files/');
             hdfsData = await response.json();
-            updateFiles(); // Populate files initially
+            updateFiles();
         } catch (error) {
             console.error("Failed to fetch HDFS file list:", error);
         }
     }
 
+    // Update file dropdown when folder changes
     function updateFiles() {
         const folder = document.getElementById("folder-select").value;
         const fileSelect = document.getElementById("file-select");
@@ -304,134 +348,213 @@
             hdfsData[folder].forEach(file => {
                 const option = document.createElement("option");
                 option.value = file;
-                option.text = file.split('/').pop();  // Show filename only
+                option.text = file.split('/').pop();
                 fileSelect.appendChild(option);
             });
+            fileSelect.selectedIndex = 0;
+            fileCurrentPage = 1;
+            previewFile();  // Show preview of first file by default
         } else {
             const option = document.createElement("option");
             option.text = "No files found";
             fileSelect.appendChild(option);
+            clearFilePreview();
+            clearIcebergPreview();
         }
-
-        // Clear previews on folder change
-        document.getElementById("filePreview").innerHTML = "File preview will appear here...";
-        document.getElementById("icebergPreview").innerHTML = "Iceberg table will appear here...";
     }
 
+    // Clear file preview and pagination info
+    function clearFilePreview() {
+        document.getElementById("filePreview").innerHTML = "File preview will appear here...";
+        updateFilePaginationControls(0);
+    }
+
+    // Clear iceberg preview and pagination info
+    function clearIcebergPreview() {
+        document.getElementById("icebergPreview").innerHTML = "Iceberg table will appear here...";
+        updateIcebergPaginationControls(0);
+    }
+
+    // Called when folder dropdown changes
+    function onFolderChange() {
+        updateFiles();
+        clearIcebergPreview();
+        icebergCurrentPage = 1;
+        fetchIcebergPreview();
+    }
+
+    // Called when file dropdown changes
+    function onFileChange() {
+        fileCurrentPage = 1;
+        previewFile();
+    }
+
+    // Change page on Prev/Next for file preview
+    function changeFilePage(delta) {
+        const newPage = fileCurrentPage + delta;
+        const totalPages = Math.ceil(fileTotalRows / fileLimit);
+        if (newPage < 1 || newPage > totalPages) return;
+        fileCurrentPage = newPage;
+        previewFile();
+    }
+
+    // Change page on Prev/Next for iceberg preview
+    function changeIcebergPage(delta) {
+        const newPage = icebergCurrentPage + delta;
+        const totalPages = Math.ceil(icebergTotalRows / icebergLimit);
+        if (newPage < 1 || newPage > totalPages) return;
+        icebergCurrentPage = newPage;
+        fetchIcebergPreview();
+    }
+
+    // Update pagination controls for file preview
+    function updateFilePaginationControls(totalRows) {
+        fileTotalRows = totalRows;
+        const totalPages = Math.ceil(fileTotalRows / fileLimit);
+        const prevBtn = document.getElementById('file-prev-btn');
+        const nextBtn = document.getElementById('file-next-btn');
+        const pageInfo = document.getElementById('file-page-info');
+
+        pageInfo.textContent = `Page ${fileCurrentPage} of ${totalPages || 1}`;
+        prevBtn.disabled = fileCurrentPage <= 1;
+        nextBtn.disabled = fileCurrentPage >= totalPages;
+    }
+
+    // Update pagination controls for iceberg preview
+    function updateIcebergPaginationControls(totalRows) {
+        icebergTotalRows = totalRows;
+        const totalPages = Math.ceil(icebergTotalRows / icebergLimit);
+        const prevBtn = document.getElementById('iceberg-prev-btn');
+        const nextBtn = document.getElementById('iceberg-next-btn');
+        const pageInfo = document.getElementById('iceberg-page-info');
+
+        pageInfo.textContent = `Page ${icebergCurrentPage} of ${totalPages || 1}`;
+        prevBtn.disabled = icebergCurrentPage <= 1;
+        nextBtn.disabled = icebergCurrentPage >= totalPages;
+    }
+
+    // Preview selected file with pagination support
     async function previewFile() {
         const fileSelect = document.getElementById("file-select");
         const filePath = fileSelect.value;
         const previewDiv = document.getElementById("filePreview");
 
-        if (!filePath) {
-            previewDiv.innerHTML = "Please select a file to preview.";
+        if (!filePath || filePath === "No files found") {
+            clearFilePreview();
             return;
         }
 
         previewDiv.innerHTML = "Loading preview...";
 
         try {
-            const response = await fetch(`/preview-file/?file_path=${encodeURIComponent(filePath)}`);
+            const url = `/preview-file/?file_path=${encodeURIComponent(filePath)}&page=${fileCurrentPage}&limit=${fileLimit}`;
+            const response = await fetch(url);
             const data = await response.json();
 
             if (data.error) {
                 previewDiv.innerHTML = `<span style="color: red;">Error: ${data.error}</span>`;
+                updateFilePaginationControls(0);
                 return;
             }
 
+            updateFilePaginationControls(data.total || 0);
+
             if (data.type === 'csv') {
-                let html = '<table border="1" cellpadding="5" cellspacing="0"><thead><tr>';
-                if (data.rows.length > 0) {
-                    data.rows[0].forEach(header => {
-                        html += `<th>${escapeHtml(header)}</th>`;
-                    });
-                    html += '</tr></thead><tbody>';
-
-                    data.rows.slice(1).forEach(row => {
-                        html += '<tr>';
-                        row.forEach(cell => {
-                            html += `<td>${escapeHtml(cell)}</td>`;
-                        });
-                        html += '</tr>';
-                    });
-                    html += '</tbody></table>';
-                } else {
-                    html = "CSV file is empty.";
-                }
-                previewDiv.innerHTML = html;
-
+                previewDiv.innerHTML = generateTable(data.rows);
             } else if (['json', 'xml', 'pdf', 'text'].includes(data.type)) {
                 previewDiv.innerHTML = `<pre>${escapeHtml(data.content)}</pre>`;
             } else {
                 previewDiv.innerHTML = "No preview available for this file type.";
             }
+
+            // Refresh iceberg preview only if needed, or you can remove this line
+            // fetchIcebergPreview();
+
         } catch (error) {
             previewDiv.innerHTML = `<span style="color: red;">Error loading preview: ${error.message}</span>`;
+            updateFilePaginationControls(0);
         }
+    }
 
-        // Fetch Iceberg Table Preview
+    // Fetch and display Iceberg table preview for current folder with pagination
+    async function fetchIcebergPreview() {
         const folder = document.getElementById("folder-select").value;
         const icebergDiv = document.getElementById("icebergPreview");
         icebergDiv.innerHTML = "Loading Iceberg table preview...";
 
         try {
-            // Use 'table_type' param to match backend expectations
-            const icebergResp = await fetch(`/read-iceberg-table/?table_type=${folder}`);
-            const icebergData = await icebergResp.json();
+            const url = `/read-iceberg-table/?table_type=${folder}&page=${icebergCurrentPage}&limit=${icebergLimit}`;
+            const response = await fetch(url);
+            const icebergData = await response.json();
 
             if (icebergData.error) {
                 icebergDiv.innerHTML = `<span style="color: red;">Error: ${icebergData.error}</span>`;
-            } else {
-                const rows = icebergData.rows;
-                if (rows.length > 0) {
-                    const headers = Object.keys(rows[0]);
-                    let html = "<h4>Iceberg Table Preview:</h4><table><thead><tr>";
-                    headers.forEach(header => {
-                        html += `<th>${escapeHtml(header)}</th>`;
-                    });
-                    html += "</tr></thead><tbody>";
-
-                    rows.forEach(row => {
-                        html += "<tr>";
-                        headers.forEach(header => {
-                            html += `<td>${escapeHtml(String(row[header]))}</td>`;
-                        });
-                        html += "</tr>";
-                    });
-
-                    html += "</tbody></table>";
-                    icebergDiv.innerHTML = html;
-                } else {
-                    icebergDiv.innerHTML = "No rows found in Iceberg table.";
-                }
+                updateIcebergPaginationControls(0);
+                return;
             }
+
+            updateIcebergPaginationControls(icebergData.total || 0);
+
+            const rows = icebergData.rows || [];
+            if (rows.length > 0) {
+                const headers = Object.keys(rows[0]);
+                let html = "<h4>Iceberg Table Preview:</h4><table><thead><tr>";
+                headers.forEach(header => {
+                    html += `<th>${escapeHtml(header)}</th>`;
+                });
+                html += "</tr></thead><tbody>";
+
+                rows.forEach(row => {
+                    html += "<tr>";
+                    headers.forEach(header => {
+                        html += `<td>${escapeHtml(String(row[header]))}</td>`;
+                    });
+                    html += "</tr>";
+                });
+
+                html += "</tbody></table>";
+                icebergDiv.innerHTML = html;
+            } else {
+                icebergDiv.innerHTML = "No rows found in Iceberg table.";
+            }
+
         } catch (error) {
             icebergDiv.innerHTML = `<span style="color: red;">Error fetching Iceberg table: ${error.message}</span>`;
+            updateIcebergPaginationControls(0);
         }
     }
 
-    // Helper to safely escape HTML characters
-    function escapeHtml(text) {
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    // Generate HTML table from rows array (first row = headers)
+    function generateTable(rows) {
+        if (!rows.length) return "No data available.";
+        let html = "<table><thead><tr>";
+        rows[0].forEach(header => {
+            html += `<th>${escapeHtml(header)}</th>`;
+        });
+        html += "</tr></thead><tbody>";
+        rows.slice(1).forEach(row => {
+            html += "<tr>" + row.map(col => `<td>${escapeHtml(col)}</td>`).join('') + "</tr>";
+        });
+        html += "</tbody></table>";
+        return html;
     }
 
-    // Initial load
-    fetchFiles();
+    // Escape HTML special chars for safe display
+    function escapeHtml(text) {
+        if (!text) return "";
+        return text.replace(/&/g, "&amp;")
+                   .replace(/</g, "&lt;")
+                   .replace(/>/g, "&gt;")
+                   .replace(/"/g, "&quot;")
+                   .replace(/'/g, "&#039;");
+    }
 
-    // Event listeners
-    document.getElementById("folder-select").addEventListener("change", () => {
-        updateFiles();
-    });
-
-    document.getElementById("file-select").addEventListener("change", () => {
-        previewFile();
-    });
+    // Initialize by fetching files and setting up initial preview
+    window.onload = function () {
+        fetchFiles();
+        // Fetch iceberg preview for initial folder
+        fetchIcebergPreview();
+    }
 </script>
-
 </body>
 </html>

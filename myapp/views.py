@@ -530,51 +530,65 @@ def list_hdfs_files(request):
 
 
 
-import io
-import json
-import csv
-import xml.etree.ElementTree as ET
-from PyPDF2 import PdfReader
 from django.http import JsonResponse
-from hdfs import InsecureClient
 import csv
 import io
 import json
 import xml.etree.ElementTree as ET
 from PyPDF2 import PdfReader
+
 from django.http import JsonResponse
+import csv, json, io
+import xml.etree.ElementTree as ET
+from PyPDF2 import PdfReader
 
 def preview_hdfs_file(request):
     file_path = request.GET.get('file_path')
+    page = int(request.GET.get('page', 1))
+    limit = int(request.GET.get('limit', 10))
+    start = (page - 1) * limit
+    end = start + limit
 
     if not file_path:
         return JsonResponse({'error': 'File path not provided'}, status=400)
 
-    # Normalize path to absolute
     if not file_path.startswith('/'):
         file_path = '/' + file_path
 
-    # Optional: enforce path to be under /Files if your setup requires it
     if not file_path.startswith('/Files'):
         file_path = '/Files' + file_path if file_path != '/Files' else '/Files'
 
     try:
         ext = file_path.split('.')[-1].lower()
-
         with client.read(file_path) as f:
             file_bytes = f.read()
 
         if ext == 'csv':
             decoded = file_bytes.decode('utf-8', errors='replace')
             reader = csv.reader(io.StringIO(decoded))
-            rows = list(reader)[:10]  # First 10 rows
-            return JsonResponse({'type': 'csv', 'rows': rows})
+            all_rows = list(reader)
+            paginated = all_rows[start:end]
+            return JsonResponse({
+                'type': 'csv',
+                'rows': paginated,
+                'total': len(all_rows),
+                'page': page
+            })
 
         elif ext == 'json':
             decoded = file_bytes.decode('utf-8', errors='replace')
             parsed = json.loads(decoded)
-            pretty = json.dumps(parsed, indent=2)
-            return JsonResponse({'type': 'json', 'content': pretty})
+            if isinstance(parsed, list):
+                total = len(parsed)
+                paginated = parsed[start:end]
+                return JsonResponse({
+                    'type': 'json',
+                    'content': json.dumps(paginated, indent=2),
+                    'total': total,
+                    'page': page
+                })
+            else:
+                return JsonResponse({'type': 'json', 'content': json.dumps(parsed, indent=2)})
 
         elif ext == 'xml':
             decoded = file_bytes.decode('utf-8', errors='replace')
@@ -582,43 +596,50 @@ def preview_hdfs_file(request):
                 root = ET.fromstring(decoded)
                 xml_str = ET.tostring(root, encoding='unicode')
             except Exception:
-                xml_str = decoded  # fallback if malformed
+                xml_str = decoded
             return JsonResponse({'type': 'xml', 'content': xml_str})
 
         elif ext == 'pdf':
             reader = PdfReader(io.BytesIO(file_bytes))
             text = ""
-            for page in reader.pages[:2]:  # first 2 pages
-                text += page.extract_text() or ''
-            return JsonResponse({'type': 'pdf', 'content': text.strip()})
+            for page_obj in reader.pages[start:end]:
+                text += page_obj.extract_text() or ''
+            return JsonResponse({'type': 'pdf', 'content': text.strip(), 'total': len(reader.pages), 'page': page})
 
         else:
             decoded = file_bytes.decode('utf-8', errors='replace')
-            return JsonResponse({'type': 'text', 'content': decoded[:1000]})
+            lines = decoded.splitlines()
+            paginated = lines[start:end]
+            return JsonResponse({
+                'type': 'text',
+                'content': "\n".join(paginated),
+                'total': len(lines),
+                'page': page
+            })
 
     except Exception as e:
         return JsonResponse({'error': f"Failed to read file '{file_path}': {str(e)}"}, status=500)
-# views.py
 
-# spark_session.py
+# views.py or your combined Django view file
+
+from django.http import JsonResponse
 from pyspark.sql import SparkSession
 
+# Spark session initializer
 def get_spark():
-    spark = SparkSession.getActiveSession()
-    if spark is None:
-        spark = SparkSession.builder \
-            .appName("IcebergReader") \
-            .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
-            .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
-            .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
-            .getOrCreate()
-    return spark
-from django.http import JsonResponse
-# from .spark_session import get_spark  # import reusable session getter
+    return SparkSession.builder \
+        .appName("IcebergApp") \
+        .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
+        .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
+        .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs://namenode:9000/warehouse") \
+        .getOrCreate()
 
+# Read iceberg table with pagination
 def read_iceberg_table(request):
     table_type = request.GET.get("table_type") or request.GET.get("type")
     db_name = request.GET.get("db", "db_name")
+    page = int(request.GET.get("page", 1))
+    page_size = int(request.GET.get("page_size", 10))
 
     if not table_type:
         return JsonResponse({'error': 'Missing table_type in request'}, status=400)
@@ -627,7 +648,27 @@ def read_iceberg_table(request):
         spark = get_spark()
         table_name = f"{db_name}.{table_type}_table"
         df = spark.read.format("iceberg").load(f"hadoop_cat.{table_name}")
-        rows = df.limit(10).toPandas().to_dict(orient='records')
-        return JsonResponse({'table': table_name, 'rows': rows})
+
+        total_count = df.count()
+        start = (page - 1) * page_size
+        end = start + page_size
+
+        # Add row index using zipWithIndex for pagination
+        indexed_rdd = df.rdd.zipWithIndex().filter(
+            lambda row_index: start <= row_index[1] < end
+        ).map(lambda row_index: row_index[0])
+
+        page_df = spark.createDataFrame(indexed_rdd, schema=df.schema)
+        rows = page_df.toPandas().to_dict(orient='records')
+
+        return JsonResponse({
+            'table': table_name,
+            'rows': rows,
+            'page': page,
+            'page_size': page_size,
+            'total_rows': total_count,
+            'total_pages': (total_count + page_size - 1) // page_size,
+        })
+
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
