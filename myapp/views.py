@@ -338,14 +338,30 @@ def segregate_files(request):
             #ekdam upar likhna, qname different for csvs, xmls, etc
 
             qname = 'xmlfiles'
+
  
 #har ek ke andar ye likhna
  
 #apna processing kiya, assume filename aya
             
             try:
-                
                 for f in files:
+                    filename = f.name
+                    extension = filename.split('.')[-1].lower()
+                    if extension == 'csv':
+                        qname = 'csvfiles'
+                    elif extension == 'xml':
+                        qname = 'xmlfiles'
+                    elif extension == 'json':
+                        qname = 'jsonfiles'
+                    elif extension == 'pdf':
+                        qname = 'pdffiles'
+                    else:
+                        print(f"❌ Unsupported file type: {extension}")
+                        continue  # Skip unsupported files
+
+
+                    
                     print("Files to uploadssssssssssssssssssssssssseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee: ", f.name)
                     r.lpush(qname,f.name)
                     upload_to_hdfs(f, f.name)
@@ -363,6 +379,13 @@ def segregate_files(request):
                          '--master', 'spark://192.168.1.214:7077',
                     '--deploy-mode', 'client',
                     '/dataplatform/myapp/xmlprocess.py',
+                    ], check=True)
+                subprocess.run([
+                    'spark-submit',
+                    '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+                         '--master', 'spark://192.168.1.214:7077',
+                    '--deploy-mode', 'client',
+                    '/dataplatform/myapp/jsonprocess.py',
                     ], check=True)
                         # Optional loading screen
                 # return render(request, 'loading.html', {'redirect_url': '/segregate/trigger/'})
