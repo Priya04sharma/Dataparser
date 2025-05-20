@@ -485,10 +485,26 @@ import xml.etree.ElementTree as ET
 from PyPDF2 import PdfReader
 from django.http import JsonResponse
 from hdfs import InsecureClient
+import csv
+import io
+import json
+import xml.etree.ElementTree as ET
+from PyPDF2 import PdfReader
+from django.http import JsonResponse
+
 def preview_hdfs_file(request):
     file_path = request.GET.get('file_path')
+
     if not file_path:
         return JsonResponse({'error': 'File path not provided'}, status=400)
+
+    # Normalize path to absolute
+    if not file_path.startswith('/'):
+        file_path = '/' + file_path
+
+    # Optional: enforce path to be under /Files if your setup requires it
+    if not file_path.startswith('/Files'):
+        file_path = '/Files' + file_path if file_path != '/Files' else '/Files'
 
     try:
         ext = file_path.split('.')[-1].lower()
@@ -497,23 +513,23 @@ def preview_hdfs_file(request):
             file_bytes = f.read()
 
         if ext == 'csv':
-            decoded = file_bytes.decode('utf-8')
+            decoded = file_bytes.decode('utf-8', errors='replace')
             reader = csv.reader(io.StringIO(decoded))
             rows = list(reader)[:10]  # First 10 rows
             return JsonResponse({'type': 'csv', 'rows': rows})
 
         elif ext == 'json':
-            decoded = file_bytes.decode('utf-8')
+            decoded = file_bytes.decode('utf-8', errors='replace')
             parsed = json.loads(decoded)
             pretty = json.dumps(parsed, indent=2)
             return JsonResponse({'type': 'json', 'content': pretty})
 
         elif ext == 'xml':
-            decoded = file_bytes.decode('utf-8')
+            decoded = file_bytes.decode('utf-8', errors='replace')
             try:
                 root = ET.fromstring(decoded)
                 xml_str = ET.tostring(root, encoding='unicode')
-            except:
+            except Exception:
                 xml_str = decoded  # fallback if malformed
             return JsonResponse({'type': 'xml', 'content': xml_str})
 
@@ -525,7 +541,8 @@ def preview_hdfs_file(request):
             return JsonResponse({'type': 'pdf', 'content': text.strip()})
 
         else:
-            return JsonResponse({'type': 'text', 'content': file_bytes.decode('utf-8')[:1000]})
+            decoded = file_bytes.decode('utf-8', errors='replace')
+            return JsonResponse({'type': 'text', 'content': decoded[:1000]})
 
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': f"Failed to read file '{file_path}': {str(e)}"}, status=500)
