@@ -364,6 +364,10 @@ def segregate_files(request):
                     
                     print("Files to uploadssssssssssssssssssssssssseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee: ", f.name)
                     r.lpush(qname,f.name)
+                    queue_contents = r.lrange(qname, 0, -1)  # 0 to -1 gets the full list
+                    print("Queue contentsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq:")
+                    for item in queue_contents:
+                        print(item.decode()) 
                     upload_to_hdfs(f, f.name)
             #     subprocess.run([
             #     'spark-submit',
