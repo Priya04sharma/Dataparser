@@ -43,6 +43,7 @@
             border-bottom: none;
         }
           .back-link {
+            text-align: right;
             display: inline-block;
             margin-bottom: 20px;
             color: #0c6e7d;
@@ -61,7 +62,7 @@
 <div class="container mt-5">
     <div class="card shadow-lg p-5">
         
-   <a href="{% url 'file_dropdown_page' %}" class="back-link">⬅️ Back to Upload Page</a>
+   <a href="{% url 'file_dropdown_page' %}" class="back-link"> view to Iceberg Table</a>
         <h3 class="text-center text-primary mb-4">📁 Upload Files to Segregate</h3>
 
         {% if message %}
