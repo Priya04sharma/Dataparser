@@ -493,7 +493,7 @@
                 return;
             }
 
-            updateIcebergPaginationControls(icebergData.total || 0);
+            updateIcebergPaginationControls(icebergData.total_rows || 0);
 
             const rows = icebergData.rows || [];
             if (rows.length > 0) {

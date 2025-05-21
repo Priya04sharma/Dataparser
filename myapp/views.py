@@ -650,11 +650,59 @@ def get_spark():
         .getOrCreate()
 
 
-# Your view with pagination
+# # Your view with pagination
+# def read_iceberg_table(request):
+#     table_type = request.GET.get("table_type") or request.GET.get("type")
+#     db_name = request.GET.get("db", "db_name")
+#     try:
+#         page = int(request.GET.get("page", 1))
+#         page_size = int(request.GET.get("page_size", 10))
+#     except ValueError:
+#         return JsonResponse({'error': 'Page and page_size must be integers'}, status=400)
+
+#     if page < 1 or page_size < 1:
+#         return JsonResponse({'error': 'Page and page_size must be positive integers'}, status=400)
+
+#     if not table_type:
+#         return JsonResponse({'error': 'Missing table_type in request'}, status=400)
+
+#     try:
+#         spark = get_spark()
+#         table_name = f"{db_name}.{table_type}_table"
+
+#         df = spark.read.format("iceberg").load(f"hadoop_cat.{table_name}")
+
+#         total_count = df.count()
+#         start = (page - 1) * page_size
+#         end = start + page_size
+
+#         indexed_rdd = df.rdd.zipWithIndex().filter(
+#             lambda row_index: start <= row_index[1] < end
+#         ).map(lambda row_index: row_index[0])
+
+#         page_df = spark.createDataFrame(indexed_rdd, schema=df.schema)
+#         rows = page_df.toPandas().to_dict(orient='records')
+
+#         return JsonResponse({
+#             'table': table_name,
+#             'rows': rows,
+#             'page': page,
+#             'page_size': page_size,
+#             'total_rows': total_count,
+#             'total_pages': (total_count + page_size - 1) // page_size,
+#         })
+
+#     except Exception as e:
+#         return JsonResponse({'error': str(e)}, status=500)
+from django.http import JsonResponse
+from pyspark.sql import Window
+from pyspark.sql.functions import row_number
+
 def read_iceberg_table(request):
     print("inside yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
     table_type = request.GET.get("table_type") or request.GET.get("type")
     db_name = request.GET.get("db", "db_name")
+
     try:
         page = int(request.GET.get("page", 1))
         page_size = int(request.GET.get("page_size", 10))
