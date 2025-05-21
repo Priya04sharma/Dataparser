@@ -207,54 +207,55 @@ def preview_hdfs_file(file):
         return f"Error reading file '{file_path}': {str(e)}"
 
 # Initialize Spark
-spark = SparkSession.builder \
-    .appName("pdf_process") \
-    .master("spark://192.168.1.214:7077") \
-    .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
-    .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
-    .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
-    .config("spark.executor.memory", "4g") \
-    .config("spark.executor.cores", "2") \
-    .config("spark.cores.max", "8") \
-    .getOrCreate()
+def run(spark):
+    # spark = SparkSession.builder \
+    #     .appName("pdf_process") \
+    #     .master("spark://192.168.1.214:7077") \
+    #     .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
+    #     .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
+    #     .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
+    #     .config("spark.executor.memory", "4g") \
+    #     .config("spark.executor.cores", "2") \
+    #     .config("spark.cores.max", "8") \
+    #     .getOrCreate()
 
-# Hadoop FS setup
-hadoop_conf = spark._jsc.hadoopConfiguration()
-fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(hadoop_conf)
+    # Hadoop FS setup
+    hadoop_conf = spark._jsc.hadoopConfiguration()
+    fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(hadoop_conf)
 
-# Define schema
-schema = StructType([
-    StructField('PDF_NAME', StringType(), True),
-    StructField('PDF_TEXT', StringType(), True)
-])
+    # Define schema
+    schema = StructType([
+        StructField('PDF_NAME', StringType(), True),
+        StructField('PDF_TEXT', StringType(), True)
+    ])
 
-# Redis setup
-r = redis.Redis(host='localhost', port=6379, db=0)
-qname = 'pdffiles'
-sz = r.llen(qname)
+    # Redis setup
+    r = redis.Redis(host='localhost', port=6379, db=0)
+    qname = 'pdffiles'
+    sz = r.llen(qname)
 
-results = []
+    results = []
 
-for _ in range(sz):
-    file = r.lpop(qname)
-    file = file.decode()
-    print("Processing File:", file)
+    for _ in range(sz):
+        file = r.lpop(qname)
+        file = file.decode()
+        print("Processing File:", file)
 
-    hdfs_path = f"/Files/multiple_files/{file}"
-    textpdf = preview_hdfs_file(file)
-    print("Read the text, appending to result")
+        hdfs_path = f"/Files/multiple_files/{file}"
+        textpdf = preview_hdfs_file(file)
+        print("Read the text, appending to result")
 
-    results.append((file, textpdf))
+        results.append((file, textpdf))
 
-    # Move file in HDFS
-    src = spark._jvm.org.apache.hadoop.fs.Path(f"hdfs:///Files/multiple_files/{file}")
-    dst = spark._jvm.org.apache.hadoop.fs.Path(f"hdfs:///Files/pdf/{file}")
-    fs.rename(src, dst)
-    print("Moved the file")
+        # Move file in HDFS
+        src = spark._jvm.org.apache.hadoop.fs.Path(f"hdfs:///Files/multiple_files/{file}")
+        dst = spark._jvm.org.apache.hadoop.fs.Path(f"hdfs:///Files/pdf/{file}")
+        fs.rename(src, dst)
+        print("Moved the file")
 
-# Write to Iceberg table
-df = spark.createDataFrame(results, schema=schema)
-df.writeTo("hadoop_cat.db_name.pdf_table").append()
+    # Write to Iceberg table
+    df = spark.createDataFrame(results, schema=schema)
+    df.writeTo("hadoop_cat.db_name.pdf_table").append()
 
-# Stop Spark session
-spark.stop()
+    # Stop Spark session
+    

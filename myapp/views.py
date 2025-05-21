@@ -369,37 +369,37 @@ def segregate_files(request):
                     for item in queue_contents:
                         print(item.decode()) 
                     upload_to_hdfs(f, f.name)
-            #     subprocess.run([
-            #     'spark-submit',
-            #     '--packages com.databricks:spark-xml_2.12:0.15.0',
-            #     '--master', 'spark://192.168.1.214:7077',
-            #     '--deploy-mode', 'client',
-            #     '/dataplatform/myapp/xmlprocess.py',
+                subprocess.run([
+                'spark-submit',
+                '--packages com.databricks:spark-xml_2.12:0.15.0',
+                '--master', 'spark://192.168.1.214:7077',
+                '--deploy-mode', 'client',
+                '/dataplatform/myapp/process_all.py',
                 
-            # ], check=True)
-                commands = [
-    ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
-     '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
-     '/dataplatform/myapp/xmlprocess.py'],
+            ], check=True)
+#                 commands = [
+#     ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+#      '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
+#      '/dataplatform/myapp/xmlprocess.py'],
 
-    ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
-     '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
-     '/dataplatform/myapp/jsonprocess.py'],
+#     ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+#      '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
+#      '/dataplatform/myapp/jsonprocess.py'],
 
-    ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
-     '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
-     '/dataplatform/myapp/csvprocess.py'],
+#     ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+#      '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
+#      '/dataplatform/myapp/csvprocess.py'],
 
-    ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
-     '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
-     '/dataplatform/myapp/pdfprocess.py']
+#     ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+#      '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
+#      '/dataplatform/myapp/pdfprocess.py']
 
-                        ]
-                processes = [subprocess.Popen(cmd) for cmd in commands]
+#                         ]
+#                 processes = [subprocess.Popen(cmd) for cmd in commands]
 
-# Wait for all to finish
-                for p in processes:
-                    p.wait()
+# # Wait for all to finish
+#                 for p in processes:
+#                     p.wait()
                 print("yeahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
 
                 # subprocess.run([
