@@ -275,10 +275,26 @@
             font-weight: bold;
             vertical-align: middle;
         }
+               .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #0c6e7d;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+            color: #084c52;
+        }
     </style>
 </head>
 <body>
 <div class="container">
+        <!-- Back link -->
+   <a href="{% url 'segregate_files' %}" class="back-link">⬅️ Back to Upload Page</a>
+
     <h2>Select HDFS File</h2>
 
     <label for="folder-select">Choose Folder:</label>

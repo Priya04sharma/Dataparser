@@ -42,11 +42,27 @@
         .uploaded-item:last-child {
             border-bottom: none;
         }
+          .back-link {
+            text-align: right;
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #0c6e7d;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+            color: #084c52;
+        }
     </style>
 </head>
 <body>
 <div class="container mt-5">
     <div class="card shadow-lg p-5">
+        
+   <a href="{% url 'file_dropdown_page' %}" class="back-link"> view to Iceberg Table</a>
         <h3 class="text-center text-primary mb-4">📁 Upload Files to Segregate</h3>
 
         {% if message %}
