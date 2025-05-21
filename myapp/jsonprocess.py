@@ -59,6 +59,7 @@ def run(spark):
         path_to_process = spark._jvm.org.apache.hadoop.fs.Path(path_to_process)
 
         fs.rename(path_to_process, path_to_move)
+        print(fs)
 
     
     

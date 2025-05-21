@@ -13,7 +13,7 @@ def main():
     .config("spark.sql.catalog.hadoop_cat.type", "hadoop")
     .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse")
     .config("spark.executor.memory", "12g")
-    .config("spark.executor.cores", "4")
+    .config("spark.executor.cores", "32")
     .config("spark.cores.max", "32")
     .config("spark.jars.packages", "com.databricks:spark-xml_2.12:0.15.0")
     .getOrCreate()
