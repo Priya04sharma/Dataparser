@@ -373,34 +373,59 @@ def segregate_files(request):
             #     '/dataplatform/myapp/xmlprocess.py',
                 
             # ], check=True)
-                subprocess.run([
-                    'spark-submit',
-                    '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
-                         '--master', 'spark://192.168.1.214:7077',
-                    '--deploy-mode', 'client',
-                    '/dataplatform/myapp/xmlprocess.py',
-                    ], check=True)
-                subprocess.run([
-                    'spark-submit',
-                    '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
-                         '--master', 'spark://192.168.1.214:7077',
-                    '--deploy-mode', 'client',
-                    '/dataplatform/myapp/jsonprocess.py',
-                    ], check=True)
-                subprocess.run([
-                    'spark-submit',
-                    '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
-                         '--master', 'spark://192.168.1.214:7077',
-                    '--deploy-mode', 'client',
-                    '/dataplatform/myapp/csvprocess.py',
-                    ], check=True)
-                subprocess.run([
-                    'spark-submit',
-                    '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
-                         '--master', 'spark://192.168.1.214:7077',
-                    '--deploy-mode', 'client',
-                    '/dataplatform/myapp/pdfprocess.py',
-                    ], check=True)
+                commands = [
+    ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+     '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
+     '/dataplatform/myapp/xmlprocess.py'],
+
+    ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+     '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
+     '/dataplatform/myapp/jsonprocess.py'],
+
+    ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+     '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
+     '/dataplatform/myapp/csvprocess.py'],
+
+    ['spark-submit', '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+     '--master', 'spark://192.168.1.214:7077', '--deploy-mode', 'client',
+     '/dataplatform/myapp/pdfprocess.py']
+
+                        ]
+                processes = [subprocess.Popen(cmd) for cmd in commands]
+
+# Wait for all to finish
+                for p in processes:
+                    p.wait()
+                print("yeahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+
+                # subprocess.run([
+                #     'spark-submit',
+                #     '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+                #          '--master', 'spark://192.168.1.214:7077',
+                #     '--deploy-mode', 'client',
+                #     '/dataplatform/myapp/xmlprocess.py',
+                #     ], check=True)
+                # subprocess.run([
+                #     'spark-submit',
+                #     '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+                #          '--master', 'spark://192.168.1.214:7077',
+                #     '--deploy-mode', 'client',
+                #     '/dataplatform/myapp/jsonprocess.py',
+                #     ], check=True)
+                # subprocess.run([
+                #     'spark-submit',
+                #     '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+                #          '--master', 'spark://192.168.1.214:7077',
+                #     '--deploy-mode', 'client',
+                #     '/dataplatform/myapp/csvprocess.py',
+                #     ], check=True)
+                # subprocess.run([
+                #     'spark-submit',
+                #     '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+                #          '--master', 'spark://192.168.1.214:7077',
+                #     '--deploy-mode', 'client',
+                #     '/dataplatform/myapp/pdfprocess.py',
+                #     ], check=True)
                         # Optional loading screen
                 # return render(request, 'loading.html', {'redirect_url': '/segregate/trigger/'})
                 return render(request, 'redirect.html')

@@ -12,7 +12,7 @@ import redis
  
 spark = (
     SparkSession.builder
-    .appName("outqueue_process")
+    .appName("xml_process")
     .master("spark://192.168.1.214:7077")
     .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog")
     .config("spark.sql.catalog.hadoop_cat.type", "hadoop")
