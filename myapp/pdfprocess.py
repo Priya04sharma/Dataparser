@@ -208,18 +208,7 @@ def preview_hdfs_file(file):
 
 # Initialize Spark
 def run(spark):
-    # spark = SparkSession.builder \
-    #     .appName("pdf_process") \
-    #     .master("spark://192.168.1.214:7077") \
-    #     .config("spark.sql.catalog.hadoop_cat", "org.apache.iceberg.spark.SparkCatalog") \
-    #     .config("spark.sql.catalog.hadoop_cat.type", "hadoop") \
-    #     .config("spark.sql.catalog.hadoop_cat.warehouse", "hdfs:///Files/iceberg/warehouse") \
-    #     .config("spark.executor.memory", "4g") \
-    #     .config("spark.executor.cores", "2") \
-    #     .config("spark.cores.max", "8") \
-    #     .getOrCreate()
 
-    # Hadoop FS setup
     hadoop_conf = spark._jsc.hadoopConfiguration()
     fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(hadoop_conf)
 

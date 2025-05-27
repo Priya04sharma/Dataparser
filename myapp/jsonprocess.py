@@ -1,16 +1,4 @@
-from pyspark.sql import SparkSession
 
-from py4j.java_gateway import java_import
-
-from pyspark.sql.types import StructType, StructField, StringType, DoubleType
-
-from queue import Queue
-
-import time
-
-import redis
- 
-def run(spark): 
     # spark = SparkSession.builder \
     #     .appName("json_process") \
     #     .master("spark://192.168.1.214:7077") \
@@ -21,6 +9,16 @@ def run(spark):
     #     .config("spark.executor.cores", "2") \
     #     .config("spark.cores.max", "8") \
     #     .getOrCreate()
+
+
+from pyspark.sql import SparkSession
+from py4j.java_gateway import java_import
+from pyspark.sql.types import StructType, StructField, StringType, DoubleType
+from queue import Queue
+import time
+import redis
+ 
+def run(spark): 
 
     hadoop_conf = spark._jsc.hadoopConfiguration()
 
