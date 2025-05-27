@@ -15,7 +15,7 @@ def main():
     .config("spark.executor.memory", "14g")
     .config("spark.executor.cores", "8")
     .config("spark.cores.max", "32")
-    .config("spark.jars.packages", "com.databricks:spark-xml_2.12:0.15.0")
+    # .config("spark.jars.packages", "com.databricks:spark-xml_2.12:0.15.0")
     .getOrCreate()
     )
 
