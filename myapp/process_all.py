@@ -15,14 +15,14 @@ def main():
     .config("spark.executor.memory", "14g")
     .config("spark.executor.cores", "8")
     .config("spark.cores.max", "32")
-    # .config("spark.jars.packages", "com.databricks:spark-xml_2.12:0.15.0")
+    .config("spark.jars.packages", "com.databricks:spark-xml_2.12:0.15.0")
     .getOrCreate()
     )
 
-    # xmlprocess.run(spark)
+    xmlprocess.run(spark)
     jsonprocess.run(spark)
-    # csvprocess.run(spark)/
-    # pdfprocess.run(spark)
+    csvprocess.run(spark)
+    pdfprocess.run(spark)
 
     spark.stop()
 

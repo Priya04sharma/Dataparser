@@ -372,7 +372,7 @@ def segregate_files(request):
                     upload_to_hdfs(f, f.name)
                 subprocess.run([
                 'spark-submit',
-                # '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
+                '--packages', 'com.databricks:spark-xml_2.12:0.15.0',
                 '--master', 'spark://192.168.1.214:7077',
                 '--deploy-mode', 'client',
                 '/dataplatform/myapp/process_all.py',
