@@ -21,8 +21,8 @@ def main():
 
     # xmlprocess.run(spark)
     jsonprocess.run(spark)
-    csvprocess.run(spark)
-    pdfprocess.run(spark)
+    # csvprocess.run(spark)/
+    # pdfprocess.run(spark)
 
     spark.stop()
 
