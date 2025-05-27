@@ -1,11 +1,12 @@
 from pyspark.sql import SparkSession
+
 import xmlprocess
 import jsonprocess
 import csvprocess
 import pdfprocess
 
 def main():
-    from pyspark.sql import SparkSession
+    
  
     spark = (
         SparkSession.builder
@@ -18,7 +19,7 @@ def main():
         .config("spark.hadoop.fs.defaultFS", "hdfs://192.168.1.214:9000") 
         .config("spark.jars", "/opt/spark/jars/spark-xml_2.12-0.15.0.jar") 
         .getOrCreate()
-    
+
     )
 
  
